@@ -10,6 +10,11 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    # Returns auth headers with a valid JWT for the given user fixture.
+    # Usage: get "/api/v1/something", headers: auth_headers_for(users(:client_alice))
+    def auth_headers_for(user)
+      token = JwtService.encode(user_id: user.id)
+      { "Authorization" => "Bearer #{token}" }
+    end
   end
 end

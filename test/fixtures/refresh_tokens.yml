@@ -1,0 +1,9 @@
+alice_token:
+  user: client_alice
+  token: active_refresh_token_abc123
+  expires_at: <%= 30.days.from_now %>
+
+expired_token:
+  user: client_bob
+  token: expired_refresh_token_xyz789
+  expires_at: <%= 1.day.ago %>
