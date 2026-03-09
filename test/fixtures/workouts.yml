@@ -1,0 +1,9 @@
+chest_day:
+  week: week_one
+  name: Chest Workout
+  day: 1
+
+leg_day:
+  week: week_one
+  name: Leg Workout
+  day: 3

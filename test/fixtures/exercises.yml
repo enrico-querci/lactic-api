@@ -1,0 +1,20 @@
+bench_press:
+  name: Bench Press
+  muscle_group: Chest
+  is_custom: false
+
+squat:
+  name: Barbell Squat
+  muscle_group: Quadriceps
+  is_custom: false
+
+bicep_curl:
+  name: Bicep Curl
+  muscle_group: Biceps
+  is_custom: false
+
+custom_exercise:
+  name: Coach Special Press
+  muscle_group: Chest
+  is_custom: true
+  coach: coach_john

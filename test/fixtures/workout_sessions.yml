@@ -1,0 +1,7 @@
+alice_chest_session:
+  client: client_alice
+  workout: chest_day
+  program_assignment: alice_strength
+  started_at: "2026-03-01 10:00:00"
+  completed_at: "2026-03-01 11:00:00"
+  notes: Great workout!

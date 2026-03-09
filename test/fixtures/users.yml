@@ -1,0 +1,16 @@
+coach_john:
+  name: John Coach
+  email: john@example.com
+  role: coach
+
+client_alice:
+  name: Alice Client
+  email: alice@example.com
+  role: client
+  coach: coach_john
+
+client_bob:
+  name: Bob Client
+  email: bob@example.com
+  role: client
+  coach: coach_john

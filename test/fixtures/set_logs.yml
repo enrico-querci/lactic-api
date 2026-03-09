@@ -1,0 +1,11 @@
+bench_set_one:
+  exercise_log: alice_bench_log
+  position: 1
+  weight_kg: 60.00
+  reps: 10
+
+bench_set_two:
+  exercise_log: alice_bench_log
+  position: 2
+  weight_kg: 60.00
+  reps: 8

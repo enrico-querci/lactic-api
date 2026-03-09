@@ -1,0 +1,4 @@
+chest_template:
+  coach: coach_john
+  name: Chest Day Template
+  source_workout: chest_day

@@ -1,0 +1,27 @@
+bench_in_chest_day:
+  workout: chest_day
+  exercise: bench_press
+  position: A
+  sets: 4
+  reps: 10
+  rest_seconds: 90
+  rir: 2
+  weight: 60.00
+
+squat_in_leg_day:
+  workout: leg_day
+  exercise: squat
+  position: A
+  sets: 3
+  reps: 8
+  rest_seconds: 120
+  rir: 1
+  weight: 80.00
+
+curl_in_chest_day:
+  workout: chest_day
+  exercise: bicep_curl
+  position: B
+  sets: 3
+  reps: 12
+  rest_seconds: 60
