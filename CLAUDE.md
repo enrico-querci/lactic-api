@@ -1,0 +1,1 @@
+/Users/chico/dev/lactic-api/AGENTS.md
