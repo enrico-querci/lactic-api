@@ -90,3 +90,31 @@ exercises.each do |muscle_group, names|
 end
 
 puts "Seeded #{total} exercises across #{exercises.keys.count} muscle groups"
+
+# Dev users — coach + two clients
+# Idempotent: safe to run multiple times
+
+coach = User.find_or_create_by!(email: "john@example.com") do |u|
+  u.name = "John Coach"
+  u.role = :coach
+  u.provider = "dev"
+  u.provider_uid = "dev_coach_1"
+end
+
+alice = User.find_or_create_by!(email: "alice@example.com") do |u|
+  u.name = "Alice Client"
+  u.role = :client
+  u.provider = "dev"
+  u.provider_uid = "dev_client_1"
+  u.coach = coach
+end
+
+bob = User.find_or_create_by!(email: "bob@example.com") do |u|
+  u.name = "Bob Client"
+  u.role = :client
+  u.provider = "dev"
+  u.provider_uid = "dev_client_2"
+  u.coach = coach
+end
+
+puts "Seeded 3 users: #{coach.name} (coach), #{alice.name} (client), #{bob.name} (client)"
