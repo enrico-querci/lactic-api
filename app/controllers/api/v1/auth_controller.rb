@@ -7,7 +7,8 @@ module Api
       def create
         result = Auth::Authenticate.call(
           provider: params[:provider],
-          id_token: params[:id_token]
+          id_token: params[:id_token],
+          role: params[:role]
         )
         render json: {
           access_token: result[:access_token],

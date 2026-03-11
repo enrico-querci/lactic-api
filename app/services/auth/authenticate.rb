@@ -5,12 +5,12 @@ module Auth
       "google" => Auth::GoogleVerifier
     }.freeze
 
-    def self.call(provider:, id_token:)
+    def self.call(provider:, id_token:, role: nil)
       verifier = PROVIDERS[provider]
       raise Auth::VerificationError, "Unsupported provider: #{provider}" unless verifier
 
       identity = verifier.verify(id_token)
-      user = find_or_create_user(provider, identity)
+      user = find_or_create_user(provider, identity, role)
       tokens = generate_tokens(user)
 
       { user: user, **tokens }
@@ -19,7 +19,7 @@ module Auth
     class << self
       private
 
-      def find_or_create_user(provider, identity)
+      def find_or_create_user(provider, identity, role)
         # First: find by provider + uid (returning user)
         user = User.find_by(provider: provider, provider_uid: identity[:provider_uid])
         return user if user
@@ -38,7 +38,7 @@ module Auth
           provider: provider,
           provider_uid: identity[:provider_uid],
           avatar_url: identity[:avatar_url],
-          role: :client
+          role: role.presence_in(%w[coach client]) || :client
         )
       end
 
