@@ -33,7 +33,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
 # Authentication
-gem "jwt", "~> 2.9"
+gem "jwt", "~> 3.1"
 gem "apple_id", "~> 1.4"
 gem "google-id-token", "~> 1.4"
 
