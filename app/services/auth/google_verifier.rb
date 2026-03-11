@@ -2,10 +2,8 @@ module Auth
   class GoogleVerifier
     def self.verify(id_token)
       validator = GoogleIDToken::Validator.new
-      payload = validator.check(
-        id_token,
-        Rails.application.credentials.dig(:google, :client_id)
-      )
+      client_id = Rails.application.credentials.dig(:google, :client_id) || ENV["GOOGLE_CLIENT_ID"]
+      payload = validator.check(id_token, client_id)
 
       {
         email: payload["email"],
