@@ -38,7 +38,7 @@ gem "apple_id", "~> 1.4"
 gem "google-id-token", "~> 1.4"
 
 # Serialization
-gem "blueprinter", "~> 1.1"
+gem "blueprinter", "~> 1.3"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
