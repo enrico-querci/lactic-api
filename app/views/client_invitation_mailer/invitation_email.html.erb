@@ -1,0 +1,14 @@
+<h1>You have been invited to Lactic</h1>
+
+<p><strong><%= @coach.name %></strong> invited you to join as a client.</p>
+
+<p>
+  Use the button below and sign in with <strong><%= @invitation.email %></strong>
+  to verify your identity and accept the invitation.
+</p>
+
+<p>
+  <%= link_to "Accept invitation", @acceptance_url %>
+</p>
+
+<p>This link expires in 7 days. If you were not expecting this invitation, you can ignore this email.</p>

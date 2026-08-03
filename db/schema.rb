@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_163734) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "client_invitations", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.bigint "coach_id", null: false
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "revoked_at"
+    t.datetime "sent_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coach_id", "email"], name: "index_pending_client_invitations_on_coach_and_email", unique: true, where: "((accepted_at IS NULL) AND (revoked_at IS NULL))"
+    t.index ["coach_id"], name: "index_client_invitations_on_coach_id"
+    t.index ["token_digest"], name: "index_client_invitations_on_token_digest", unique: true
+  end
 
   create_table "exercise_logs", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -160,6 +175,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_163734) do
     t.index ["week_id"], name: "index_workouts_on_week_id"
   end
 
+  add_foreign_key "client_invitations", "users", column: "coach_id"
   add_foreign_key "exercise_logs", "workout_exercises"
   add_foreign_key "exercise_logs", "workout_sessions"
   add_foreign_key "exercises", "users", column: "coach_id"

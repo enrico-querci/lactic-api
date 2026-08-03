@@ -1,24 +1,40 @@
-# README
+# Lactic API
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Rails API for the Lactic client and coach applications.
 
-Things you may want to cover:
+## Client invitations
 
-* Ruby version
+New clients join through an email invitation and then verify their identity
+with Google or Apple. There is no password signup. Existing accounts can sign
+in normally; an unknown client email must present a valid invitation token.
 
-* System dependencies
+First-time coach accounts are controlled by a server-side email allowlist. The
+frontend cannot select or promote its own role.
 
-* Configuration
+### Production environment
 
-* Database creation
+Configure these variables on the Railway API service:
 
-* Database initialization
+```text
+COACH_EMAILS=info@yellowtulip.it
+FRONTEND_URL=https://lactic-web.vercel.app
+RESEND_API_KEY=re_...
+MAIL_FROM=Lactic <noreply@yellowtulip.it>
+```
 
-* How to run the test suite
+`COACH_EMAILS` accepts a comma-separated list. The domain used by `MAIL_FROM`
+must be verified in Resend before invitations can be delivered.
 
-* Services (job queues, cache servers, search engines, etc.)
+## Local development
 
-* Deployment instructions
+Requirements: Ruby 3.4.3 and PostgreSQL.
 
-* ...
+```bash
+bundle install
+bin/rails db:prepare
+bin/rails test
+bin/rails server
+```
+
+Development invitation emails use Action Mailer's test delivery method. The
+acceptance URL is written to the Rails development log.
