@@ -1,4 +1,5 @@
 ENV["RAILS_ENV"] ||= "test"
+ENV["JWT_SECRET_KEY"] ||= "test-jwt-secret-key-not-for-production"
 require_relative "../config/environment"
 require "rails/test_help"
 

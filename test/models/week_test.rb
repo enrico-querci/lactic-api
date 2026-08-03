@@ -26,7 +26,7 @@ class WeekTest < ActiveSupport::TestCase
 
   test "default scope orders by position" do
     program = programs(:strength_program)
-    assert_equal [1, 2], program.weeks.map(&:position)
+    assert_equal [ 1, 2 ], program.weeks.map(&:position)
   end
 
   test "has many workouts" do

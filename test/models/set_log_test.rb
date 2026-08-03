@@ -44,6 +44,6 @@ class SetLogTest < ActiveSupport::TestCase
 
   test "default scope orders by position" do
     log = exercise_logs(:alice_bench_log)
-    assert_equal [1, 2], log.set_logs.map(&:position)
+    assert_equal [ 1, 2 ], log.set_logs.map(&:position)
   end
 end
