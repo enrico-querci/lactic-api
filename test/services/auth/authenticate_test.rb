@@ -70,7 +70,7 @@ class Auth::AuthenticateTest < ActiveSupport::TestCase
   test "creates an allowlisted coach without trusting a client role parameter" do
     identity = { email: "coach@example.com", name: "New Coach", provider_uid: "coach_uid", avatar_url: nil }
 
-    CoachAccess.stub(:allowed?, true) do
+    stub_coach_access(allowed: true) do
       stub_google_verifier(**identity) do
         result = Auth::Authenticate.call(provider: "google", id_token: "fake_token")
 
@@ -104,6 +104,14 @@ class Auth::AuthenticateTest < ActiveSupport::TestCase
 
   def stub_google_verifier(**identity, &block)
     stub_verifier(Auth::GoogleVerifier, identity, &block)
+  end
+
+  def stub_coach_access(allowed:)
+    original = CoachAccess.method(:allowed?)
+    CoachAccess.define_singleton_method(:allowed?) { |_email| allowed }
+    yield
+  ensure
+    CoachAccess.define_singleton_method(:allowed?, original)
   end
 
   def stub_verifier(klass, identity)
