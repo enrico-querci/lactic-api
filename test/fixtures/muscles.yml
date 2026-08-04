@@ -1,0 +1,26 @@
+# `region` is the coarse grouping the provider calls bodyPart. Verified
+# functionally determined by the muscle across a 140-record provider sample.
+abs:
+  key: abs
+  name: Abs
+  region: Waist
+
+pectorals:
+  key: pectorals
+  name: Pectorals
+  region: Chest
+
+triceps:
+  key: triceps
+  name: Triceps
+  region: Upper Arms
+
+hip_flexors:
+  key: hip_flexors
+  name: Hip Flexors
+  region: Waist
+
+cardiovascular_system:
+  key: cardiovascular_system
+  name: Cardiovascular System
+  region: Cardio

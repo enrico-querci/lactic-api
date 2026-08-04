@@ -1,0 +1,20 @@
+# provider_url is never serialized to a client; Stage 4 streams the bytes
+# through a Lactic endpoint that adds the server-side provider key.
+situp_animation:
+  exercise: provider_situp
+  kind: animation
+  mime_type: image/gif
+  provider_url: https://api.workoutxapp.com/v1/gifs/0001.gif
+  provider_media_uid: "0001"
+  position: 1
+  width: 360
+  height: 360
+  byte_size: 400054
+
+treadmill_animation:
+  exercise: provider_treadmill
+  kind: animation
+  mime_type: image/gif
+  provider_url: https://api.workoutxapp.com/v1/gifs/0044.gif
+  provider_media_uid: "0044"
+  position: 1

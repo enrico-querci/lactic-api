@@ -1,0 +1,24 @@
+successful_run:
+  source: workoutx
+  status: succeeded
+  started_at: <%= 2.hours.ago.to_fs(:db) %>
+  finished_at: <%= 1.hour.ago.to_fs(:db) %>
+  fetched_count: 1327
+  created_count: 1327
+  updated_count: 0
+  deactivated_count: 0
+  rejected_count: 0
+
+failed_run:
+  source: workoutx
+  status: failed
+  started_at: <%= 30.minutes.ago.to_fs(:db) %>
+  finished_at: <%= 29.minutes.ago.to_fs(:db) %>
+  fetched_count: 10
+  rejected_count: 10
+  error_summary: "Upstream returned 429 after 3 retries"
+
+running_run:
+  source: workoutx
+  status: running
+  started_at: <%= 5.minutes.ago.to_fs(:db) %>
