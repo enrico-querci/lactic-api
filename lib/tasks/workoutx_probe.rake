@@ -53,7 +53,7 @@ module WorkoutxProbe
     end
 
     def report_plan_headers
-      response = get("/exercises", limit: 1)
+      response = get("/exercises", { limit: 1 })
       section "Plan and metering headers"
       puts "  HTTP #{response.code}"
       METERING_HEADERS.each do |header|
@@ -69,7 +69,7 @@ module WorkoutxProbe
     end
 
     def report_catalog_coverage(sample_size)
-      body = json(get("/exercises", limit: sample_size, offset: 0))
+      body = json(get("/exercises", { limit: sample_size, offset: 0 }))
 
       section "Catalog coverage"
       # Print the envelope BEFORE extracting. `extract` guesses at the payload
@@ -143,9 +143,9 @@ module WorkoutxProbe
 
     def report_pagination_and_stable_ids
       section "Pagination and ID stability"
-      first  = json(get("/exercises", limit: 5, offset: 0))
-      second = json(get("/exercises", limit: 5, offset: 5))
-      repeat = json(get("/exercises", limit: 5, offset: 0))
+      first  = json(get("/exercises", { limit: 5, offset: 0 }))
+      second = json(get("/exercises", { limit: 5, offset: 5 }))
+      repeat = json(get("/exercises", { limit: 5, offset: 0 }))
 
       first_ids = extract(first).map { |exercise| exercise["id"] }
       second_ids = extract(second).map { |exercise| exercise["id"] }
@@ -161,7 +161,7 @@ module WorkoutxProbe
 
     def report_changes_endpoint
       section "Incremental sync endpoint (Ultra only)"
-      response = get("/exercises/changes", since: 30.days.ago.strftime("%Y-%m-%d"))
+      response = get("/exercises/changes", { since: 30.days.ago.strftime("%Y-%m-%d") })
       puts "  HTTP #{response.code}"
       if response.code == "403"
         puts "  403 = plan restriction, confirming /changes requires Ultra."
