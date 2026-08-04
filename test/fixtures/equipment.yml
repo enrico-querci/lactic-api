@@ -1,0 +1,11 @@
+body_weight:
+  key: body_weight
+  name: Body Weight
+
+barbell:
+  key: barbell
+  name: Barbell
+
+exercise_ball:
+  key: exercise_ball
+  name: Exercise Ball

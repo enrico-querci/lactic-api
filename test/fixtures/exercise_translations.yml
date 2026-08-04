@@ -1,0 +1,46 @@
+situp_en:
+  exercise: provider_situp
+  locale: en
+  name: 3/4 Sit-up
+  description: A beginner isolation exercise targeting the Abs.
+  instructions:
+    - Lie flat on your back with your knees bent.
+    - Curl forward until your torso is at a 45-degree angle.
+    - Lower back down under control.
+  translation_source: provider
+  source_checksum: c0ffee0001
+
+# Machine-translated and not yet reviewed: a sync may replace this.
+situp_it:
+  exercise: provider_situp
+  locale: it
+  name: Sit-up 3/4
+  description: Un esercizio di isolamento per principianti che coinvolge gli addominali.
+  instructions:
+    - Sdraiati sulla schiena con le ginocchia piegate.
+    - Solleva il busto fino a 45 gradi.
+    - Torna giù in modo controllato.
+  translation_source: machine
+  source_checksum: c0ffee0001
+
+treadmill_en:
+  exercise: provider_treadmill
+  locale: en
+  name: Treadmill Run
+  instructions:
+    - Set the treadmill to a comfortable pace.
+    - Maintain an upright posture.
+  translation_source: provider
+  source_checksum: c0ffee0044
+
+# Human-reviewed: a sync must never overwrite this automatically.
+treadmill_it:
+  exercise: provider_treadmill
+  locale: it
+  name: Corsa sul tapis roulant
+  instructions:
+    - Imposta il tapis roulant a un ritmo confortevole.
+    - Mantieni una postura eretta.
+  translation_source: human
+  source_checksum: c0ffee0044
+  reviewed_at: <%= 2.days.ago.to_fs(:db) %>

@@ -1,0 +1,14 @@
+situp_primary:
+  exercise: provider_situp
+  muscle: abs
+  role: primary
+
+situp_secondary:
+  exercise: provider_situp
+  muscle: hip_flexors
+  role: secondary
+
+treadmill_primary:
+  exercise: provider_treadmill
+  muscle: cardiovascular_system
+  role: primary

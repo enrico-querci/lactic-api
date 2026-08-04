@@ -18,3 +18,39 @@ custom_exercise:
   muscle_group: Chest
   is_custom: true
   coach: coach_john
+
+# Provider-sourced catalog record. `name` and `muscle_group` are the legacy
+# flat columns that Stage 2 keeps populated as a compatibility shim; the
+# authoritative content lives in exercise_translations and exercise_muscles.
+provider_situp:
+  name: 3/4 Sit-up
+  muscle_group: Abs
+  is_custom: false
+  source: workoutx
+  source_uid: "0001"
+  category: strength
+  difficulty: beginner
+  mechanic: isolation
+  force: push
+  prescription_type: repetitions
+  active: true
+  assignable: true
+  content_checksum: c0ffee0001
+
+# Cardio work exists in the provider catalog but a reps-only v1 cannot express
+# it, so it is imported inactive for assignment. Exercises the `selectable`
+# scope.
+provider_treadmill:
+  name: Treadmill Run
+  muscle_group: Cardiovascular System
+  is_custom: false
+  source: workoutx
+  source_uid: "0044"
+  category: cardio
+  difficulty: beginner
+  mechanic: compound
+  force: push
+  prescription_type: repetitions
+  active: true
+  assignable: false
+  content_checksum: c0ffee0044

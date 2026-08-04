@@ -1,0 +1,7 @@
+situp_body_weight:
+  exercise: provider_situp
+  equipment: body_weight
+
+treadmill_body_weight:
+  exercise: provider_treadmill
+  equipment: body_weight
