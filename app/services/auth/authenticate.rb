@@ -5,41 +5,71 @@ module Auth
       "google" => Auth::GoogleVerifier
     }.freeze
 
-    def self.call(provider:, id_token:, role: nil)
+    def self.call(provider:, id_token:, invitation_token: nil)
       verifier = PROVIDERS[provider]
       raise Auth::VerificationError, "Unsupported provider: #{provider}" unless verifier
 
       identity = verifier.verify(id_token)
-      user = find_or_create_user(provider, identity, role)
+      invitation = find_invitation(invitation_token)
+      user = User.transaction do
+        authenticated_user = find_or_create_user(provider, identity, invitation)
+        accept_invitation(invitation, authenticated_user) if invitation
+        authenticated_user
+      end
       tokens = generate_tokens(user)
 
       { user: user, **tokens }
+    rescue ClientInvitations::Accept::AcceptanceError => e
+      raise Auth::VerificationError, e.message
     end
 
     class << self
       private
 
-      def find_or_create_user(provider, identity, role)
+      def find_or_create_user(provider, identity, invitation)
         # First: find by provider + uid (returning user)
         user = User.find_by(provider: provider, provider_uid: identity[:provider_uid])
         return user if user
 
         # Second: find by email (first social login, account linking)
-        user = User.find_by(email: identity[:email])
+        email = identity[:email].to_s.strip.downcase
+        user = User.where("LOWER(email) = ?", email).first
         if user
           user.update!(provider: provider, provider_uid: identity[:provider_uid])
           return user
         end
 
-        # Last resort: create new user
+        role = role_for_new_user(email, invitation)
+
         User.create!(
-          email: identity[:email],
+          email: email,
           name: identity[:name],
           provider: provider,
           provider_uid: identity[:provider_uid],
           avatar_url: identity[:avatar_url],
-          role: role.presence_in(%w[coach client]) || :client
+          role: role
         )
+      end
+
+      def find_invitation(token)
+        return if token.blank?
+
+        invitation = ClientInvitation.find_by_token(token)
+        raise Auth::VerificationError, "Invalid invitation link" unless invitation
+        raise Auth::VerificationError, "This invitation is no longer valid" unless invitation.pending?
+
+        invitation
+      end
+
+      def role_for_new_user(email, invitation)
+        return :client if invitation
+        return :coach if CoachAccess.allowed?(email)
+
+        raise Auth::VerificationError, "An invitation is required to create a client account"
+      end
+
+      def accept_invitation(invitation, user)
+        ClientInvitations::Accept.call(invitation: invitation, user: user)
       end
 
       def generate_tokens(user)

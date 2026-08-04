@@ -48,6 +48,12 @@ class UserTest < ActiveSupport::TestCase
     assert_includes coach.clients, users(:client_bob)
   end
 
+  test "coach has client invitations" do
+    invitation = ClientInvitation.create!(coach: users(:coach_john), email: "association@example.com")
+
+    assert_includes users(:coach_john).client_invitations, invitation
+  end
+
   test "coaches scope" do
     assert_includes User.coaches, users(:coach_john)
     assert_not_includes User.coaches, users(:client_alice)

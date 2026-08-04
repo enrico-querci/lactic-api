@@ -87,6 +87,12 @@ WorkoutSession (client performs a workout)
 - Has many `ProgramAssignment`
 - Has many `WorkoutSession`
 
+#### ClientInvitation
+- `id`, `coach_id`, `email`, `token_digest`
+- `expires_at`, `sent_at`, `accepted_at`, `revoked_at`
+- Secure, single-use invitation for onboarding a client through social sign-in
+- The signed-in Google/Apple email must match the invited email
+
 #### Program (template)
 - `id`, `coach_id`, `name`, `description`
 - Has many `Week` (variable count)
@@ -212,8 +218,9 @@ This value is computed dynamically by summing the `sets` of `WorkoutExercise` en
 ### 5.3 Coach → Client invitation
 
 1. Coach generates an invite link or enters client's email
-2. Client receives link/email → opens Lactic → accepts invite
-3. From that point on, the client is linked to the coach and receives assigned programs
+2. Client receives link/email → opens Lactic → signs in with Google or Apple
+3. Backend verifies the social identity email matches the invitation
+4. From that point on, the client is linked to the coach and receives assigned programs
 
 ---
 

@@ -9,6 +9,10 @@ Rails.application.routes.draw do
       delete "auth",         to: "auth#destroy"
       post   "auth/refresh", to: "auth#refresh"
 
+      resources :client_invitations, only: :show, param: :token do
+        post :accept, on: :member
+      end
+
       # Dev-only login — route does not exist in production
       if Rails.env.development? || Rails.env.test?
         post "auth/dev_login", to: "auth#dev_login"
@@ -20,6 +24,10 @@ Rails.application.routes.draw do
 
       # Coach endpoints
       namespace :coach do
+        resources :client_invitations, only: %i[index create destroy] do
+          post :resend, action: :resend_invitation, on: :member
+        end
+
         resources :clients, only: %i[index show destroy] do
           resources :progress, only: %i[index show], controller: "client_progress"
         end

@@ -5,7 +5,7 @@ gem "rails", "~> 8.1.2"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
 # Use the Puma web server [https://github.com/puma/puma]
-gem "puma", ">= 5.0"
+gem "puma", "~> 7.2.1"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
 
@@ -36,6 +36,9 @@ gem "image_processing", "~> 1.2"
 gem "jwt", "~> 2.9"
 gem "apple_id", "~> 1.4"
 gem "google-id-token", "~> 1.4"
+
+# Transactional email over HTTPS (Railway blocks SMTP on lower-tier plans)
+gem "resend", "~> 1.6"
 
 # Serialization
 gem "blueprinter", "~> 1.1"

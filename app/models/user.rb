@@ -10,6 +10,7 @@ class User < ApplicationRecord
   has_many :program_assignments, foreign_key: :client_id, dependent: :destroy, inverse_of: :client
   has_many :workout_sessions, foreign_key: :client_id, dependent: :destroy, inverse_of: :client
   has_many :refresh_tokens, dependent: :delete_all
+  has_many :client_invitations, foreign_key: :coach_id, dependent: :destroy, inverse_of: :coach
 
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
