@@ -1,0 +1,43 @@
+# WorkoutX response headers — captured 2026-08-04
+#
+# Source: GET https://api.workoutxapp.com/v1/exercises?limit=2
+#   (a) with no credentials            -> 401, body: error_unauthenticated_401.json
+#   (b) with X-WorkoutX-Key: wx_invalid_probe_key -> 401, body: error_invalid_key_401.json
+#
+# Both responses carried an identical header set. Volatile headers
+# (date, etag, content-length, x-railway-request-id, x-hikari-trace,
+# x-railway-edge) are stripped.
+#
+# The access-control-expose-headers value below is the most important artifact
+# in this fixture: it enumerates the metering headers WorkoutX exposes, and it
+# is returned even on an unauthenticated 401. It is the evidence that a
+# unique-GIF quota dimension exists separately from the request quota.
+
+HTTP/2 401
+access-control-expose-headers: X-WorkoutX-Plan,X-RateLimit-Limit,X-RateLimit-Remaining,X-Quota-Limit,X-Quota-Remaining,X-Quota-Reset,X-Unique-GIF-Limit,X-Unique-GIF-Used,X-Unique-GIF-Remaining
+content-type: application/json; charset=utf-8
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: cross-origin
+origin-agent-cluster: ?1
+referrer-policy: no-referrer
+server: railway-hikari
+strict-transport-security: max-age=15552000; includeSubDomains
+vary: Origin, Accept-Encoding
+x-content-type-options: nosniff
+x-dns-prefetch-control: off
+x-download-options: noopen
+x-frame-options: SAMEORIGIN
+x-permitted-cross-domain-policies: none
+x-xss-protection: 0
+
+# Metering headers, grouped:
+#
+#   Plan identity      X-WorkoutX-Plan
+#   Per-minute rate    X-RateLimit-Limit, X-RateLimit-Remaining
+#   Monthly quota      X-Quota-Limit, X-Quota-Remaining, X-Quota-Reset
+#   Unique-GIF quota   X-Unique-GIF-Limit, X-Unique-GIF-Used, X-Unique-GIF-Remaining
+#
+# NOTE: only the header NAMES are proven. No live values were observed, because
+# observing them requires an authenticated request. Per-plan limits, reset
+# cadence, and whether re-fetching an already-seen GIF re-counts against
+# X-Unique-GIF-Used are all UNKNOWN and are open vendor questions.
