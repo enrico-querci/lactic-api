@@ -2,7 +2,8 @@
 
 Stage: **0 — Provider Verification Gate** (`docs/exercise_catalog_v1_plan.md` §5).
 
-Date: 2026-08-04.
+Date: 2026-08-04. Updated 2026-08-05 with live measurements from a free-plan
+API key.
 
 ## Verdict: NOT PASSED — do not begin Stage 1
 
@@ -95,6 +96,21 @@ Measured directly by reading `X-Quota-Remaining` around interleaved calls:
 
 There is one flat request counter. A GIF costs the same as a metadata call, and
 there is **no deduplication for a repeat fetch of the same animation**.
+
+**Scope caveat:** this was measured on the **free** plan, whose page size is
+capped at 10 records. Nothing observed distinguishes "one request = one HTTP
+call" from "one request = one billing unit that may be sized differently on a
+paid tier" — and the vendor's own rate limits are quoted inconsistently across
+channels (30/min direct vs 1000/hour on RapidAPI for nominally similar tiers).
+Paid-tier metering is **assumed identical but unverified**. Treat the ratio as
+established for free and probable for paid; confirm it before purchase. The
+architectural consequence below holds under any of these interpretations,
+because none of them make a repeat view free.
+
+Related unknown: `X-Quota-Reset` returned **`null`**, so the reset cadence is
+unconfirmed. If the monthly quota does not reset on the calendar month, the
+"35,000/month" planning figure is unreliable in a way that compounds the
+per-view cost. Added to the vendor questions.
 
 **Why this is severe:** Stage 4 specifies that the web client fetch each
 animation "as an authenticated blob and create an object URL, with cleanup on
@@ -320,7 +336,7 @@ top-tier sync endpoint.
 
 Criterion #3 asks whether the provider sample maps cleanly to the proposed
 model. Now assessed against a **live 10-record sample**, fixtured at
-`test/fixtures/files/workoutx/exercises_sample.json`.
+`test/fixtures/files/workoutx/exercises_list_response.json`.
 
 | Provider field | Live example | Stage 1 destination | Notes |
 | --- | --- | --- | --- |
@@ -441,7 +457,7 @@ outright.
 | `test/fixtures/files/workoutx/error_unauthenticated_401.json` | Live 401, no credentials |
 | `test/fixtures/files/workoutx/error_invalid_key_401.json` | Live 401, rejected key |
 | `test/fixtures/files/workoutx/response_headers_401.txt` | Metering header evidence for §1.1 |
-| `test/fixtures/files/workoutx/exercises_sample.json` | **Three real exercise records** from a live authenticated call. The Stage 2 importer contract |
+| `test/fixtures/files/workoutx/exercises_list_response.json` | **Three real exercise records** from a live authenticated call. The Stage 2 importer contract |
 
 No provider GIF is committed. The animations are the subject of the unresolved
 licensing questions in §1.3, so storing one in git would pre-empt the answer.

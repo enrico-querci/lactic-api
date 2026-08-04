@@ -54,28 +54,44 @@ Question 10 could remove an entire implementation stage. See
 >    period? Relatedly, what `Cache-Control` lifetime may my server send to
 >    browsers and mobile clients for a proxied GIF?
 >
+>    This one matters a lot to me commercially. Since each GIF fetch appears to
+>    consume a request from my monthly quota even when it is the same image
+>    served repeatedly, serving animations without any caching would make my
+>    quota usage scale with how often my users open a screen rather than with
+>    how large your catalog is. If caching is permitted, a much smaller plan
+>    likely suffices; if it is not, I need to understand the real cost of
+>    serving a few hundred active users.
+>
 > 5. Is in-application attribution to WorkoutX required? If so, what wording and
 >    placement do you expect?
 >
 > **GIF availability and quota**
 >
-> 6. Do all 1,400+ exercises have a GIF on the Ultra plan? Your pricing page
->    describes the Basic plan as including "500 unique exercise GIFs", and your
->    API exposes `X-Unique-GIF-Limit`, `X-Unique-GIF-Used`, and
->    `X-Unique-GIF-Remaining` headers, so I want to be certain there is no cap
->    below the full catalog on Ultra. **What is the exact `X-Unique-GIF-Limit`
->    value on Ultra?**
+> 6. Your API reports `total: 1327` exercises. Does every one of those have a
+>    GIF on the top tier? Your pricing page describes the Basic plan as
+>    including "500 unique exercise GIFs", and your API exposes
+>    `X-Unique-GIF-Limit`, `X-Unique-GIF-Used`, and `X-Unique-GIF-Remaining`
+>    headers — though none of them appear on free-plan responses. **What is the
+>    exact `X-Unique-GIF-Limit` value on each paid tier?** I need to be certain
+>    there is no cap below 1327.
 >
-> 7. How does the unique-GIF quota interact with the monthly request quota?
->    Specifically: does fetching a GIF consume one request from the monthly
->    quota, one from the unique-GIF quota, or both? And if my server fetches the
->    same GIF a second time, does that count again, or is the unique-GIF meter
->    counted once per distinct exercise? Does the unique-GIF meter reset
->    monthly, or is it a lifetime cap for the subscription?
+> 7. On the free plan I measured that each GIF fetch decrements
+>    `X-Quota-Remaining` by 1, and that re-fetching the same GIF decrements it
+>    again. Is that also true on the paid tiers, or is GIF traffic metered
+>    differently there? Specifically: does a repeat fetch of an
+>    already-retrieved GIF count against the monthly quota again, and does the
+>    unique-GIF meter reset monthly or is it a lifetime cap for the
+>    subscription?
 >
-> 8. Are GIFs on the paid plans free of watermarks, and what resolution do they
->    use? I understand the free plan serves 180px watermarked images; I would
->    like to confirm what Ultra delivers before purchasing.
+>    Relatedly, `X-Quota-Reset` came back as `null` on my free-plan responses.
+>    When does the monthly quota reset — on the calendar month, or on the
+>    subscription anniversary?
+>
+> 8. What resolution are GIFs on the paid tiers, and are they free of
+>    watermarks? On the free plan I am receiving 360×360 images with "WorkoutX
+>    API" tiled across the frame. I would like to know exactly what the paid
+>    tiers deliver before purchasing, since watermarked images are not usable in
+>    my product.
 >
 > **Continuity**
 >

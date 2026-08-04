@@ -69,7 +69,11 @@ module WorkoutxProbe
     end
 
     def report_catalog_coverage(sample_size)
-      body = json(get("/exercises", { limit: sample_size, offset: 0 }))
+      response = get("/exercises", { limit: sample_size, offset: 0 })
+      body = json(response)
+      # Store the response verbatim, envelope included. Stage 2 has to parse the
+      # wrapper, so the fixture should BE the contract rather than describe it.
+      @captured["exercises_list_response.json"] = response.body.to_s.dup.force_encoding("UTF-8")
 
       section "Catalog coverage"
       # Print the envelope BEFORE extracting. `extract` guesses at the payload
@@ -182,7 +186,6 @@ module WorkoutxProbe
 
     def write_fixtures
       section "Fixtures"
-      @captured["exercises_sample.json"] = JSON.pretty_generate(@samples.first(3)) if @samples.any?
       if @captured.empty?
         puts "  Nothing captured."
         return

@@ -17,14 +17,18 @@ Sanitized WorkoutX API responses for use in tests. Added during **Stage 0**
 
 | File | Provenance | Stage 2 use |
 | --- | --- | --- |
-| `exercises_sample.json` | Live authenticated `GET /v1/exercises`, free plan, 2026-08-05. First three records | **The importer contract.** Real field names, casing, types, and ID format |
+| `exercises_list_response.json` | Live authenticated `GET /v1/exercises?limit=3&offset=0`, free plan, 2026-08-05. Unmodified response | **The importer contract.** Real envelope, field names, casing, types, and ID format |
 | `error_unauthenticated_401.json` | Live `GET /v1/exercises?limit=2` with no credentials, 2026-08-04 | "fail safely on authentication error" path |
 | `error_invalid_key_401.json` | Live `GET /v1/exercises?limit=2` with `X-WorkoutX-Key: wx_invalid_probe_key`, 2026-08-04 | Distinguishes *missing* key from *rejected* key |
 | `response_headers_401.txt` | Response headers from the same two calls | Quota/rate-limit header names for `catalog_sync_runs` instrumentation |
 
-`exercises_sample.json` holds the bare records only. The live list response
-wraps them: `{ "total": 1327, "count": 10, "data": [...] }`. Stage 2 must parse
-that envelope, not a bare array.
+`exercises_list_response.json` is a complete, unmodified list response — the
+`{ "total", "count", "data" }` envelope included, pretty-printed only. Parse it
+as-is; do not assume a bare array. `total` is the full catalog size (1327) while
+`count` reflects the requested page, so the two differ by design.
+
+It also contains a `°` (U+00B0) inside an instruction string, so the importer
+must read UTF-8 explicitly rather than relying on the default external encoding.
 
 Things the sample proves that the vendor documentation gets wrong:
 

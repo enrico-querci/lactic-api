@@ -1,0 +1,121 @@
+{
+  "total": 1327,
+  "count": 3,
+  "data": [
+    {
+      "id": "0001",
+      "name": "3/4 Sit-up",
+      "bodyPart": "Waist",
+      "equipment": "Body Weight",
+      "target": "Abs",
+      "secondaryMuscles": [
+        "Hip Flexors",
+        "Lower Back"
+      ],
+      "instructions": [
+        "Lie flat on your back with your knees bent and feet flat on the ground.",
+        "Place your hands behind your head with your elbows pointing outwards.",
+        "Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
+        "Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "gifUrl": "https://api.workoutxapp.com/v1/gifs/0001.gif",
+      "category": "strength",
+      "difficulty": "beginner",
+      "mechanic": "isolation",
+      "force": "push",
+      "met": 3.5,
+      "caloriesPerMinute": 4.3,
+      "description": "3/4 Sit-up is a beginner single-joint isolation pushing exercise targeting the Abs in the Waist region. Performed using bodyweight, it falls under the strength category. Secondary muscles engaged include Hip Flexors and Lower Back.",
+      "isUnilateral": false,
+      "popularityRank": 5,
+      "recommendedSets": "3",
+      "recommendedReps": "10-15",
+      "joint_focus": "lumbar_spine",
+      "intensity_level": "gentle",
+      "movement_tags": [
+        "beginner-friendly",
+        "controlled-movement",
+        "minimal-equipment",
+        "low-intensity",
+        "joint-friendly"
+      ]
+    },
+    {
+      "id": "0002",
+      "name": "45° Side Bend",
+      "bodyPart": "Waist",
+      "equipment": "Body Weight",
+      "target": "Abs",
+      "secondaryMuscles": [
+        "Obliques"
+      ],
+      "instructions": [
+        "Stand with your feet shoulder-width apart and your arms extended straight down by your sides.",
+        "Keeping your back straight and your core engaged, slowly bend your torso to one side, lowering your hand towards your knee.",
+        "Pause for a moment at the bottom, then slowly return to the starting position.",
+        "Repeat on the other side.",
+        "Continue alternating sides for the desired number of repetitions."
+      ],
+      "gifUrl": "https://api.workoutxapp.com/v1/gifs/0002.gif",
+      "category": "strength",
+      "difficulty": "beginner",
+      "mechanic": "isolation",
+      "force": "push",
+      "met": 3.5,
+      "caloriesPerMinute": 4.3,
+      "description": "45° Side Bend is a beginner single-joint isolation pushing exercise targeting the Abs in the Waist region. Performed using bodyweight, it falls under the strength category. Secondary muscles engaged include Obliques.",
+      "isUnilateral": false,
+      "popularityRank": 5,
+      "recommendedSets": "3",
+      "recommendedReps": "10-15",
+      "joint_focus": "lumbar_spine",
+      "intensity_level": "gentle",
+      "movement_tags": [
+        "beginner-friendly",
+        "controlled-movement",
+        "minimal-equipment",
+        "low-intensity",
+        "joint-friendly"
+      ]
+    },
+    {
+      "id": "0003",
+      "name": "Air Bike",
+      "bodyPart": "Waist",
+      "equipment": "Body Weight",
+      "target": "Abs",
+      "secondaryMuscles": [
+        "Hip Flexors"
+      ],
+      "instructions": [
+        "Lie flat on your back with your hands placed behind your head.",
+        "Lift your legs off the ground and bend your knees at a 90-degree angle.",
+        "Bring your right elbow towards your left knee while simultaneously straightening your right leg.",
+        "Return to the starting position and repeat the movement on the opposite side, bringing your left elbow towards your right knee while straightening your left leg.",
+        "Continue alternating sides in a pedaling motion for the desired number of repetitions."
+      ],
+      "gifUrl": "https://api.workoutxapp.com/v1/gifs/0003.gif",
+      "category": "strength",
+      "difficulty": "beginner",
+      "mechanic": "isolation",
+      "force": "push",
+      "met": 3.5,
+      "caloriesPerMinute": 4.3,
+      "description": "Air Bike is a beginner single-joint isolation pushing exercise targeting the Abs in the Waist region. Performed using bodyweight, it falls under the strength category. Secondary muscles engaged include Hip Flexors.",
+      "isUnilateral": false,
+      "popularityRank": 5,
+      "recommendedSets": "3",
+      "recommendedReps": "10-15",
+      "joint_focus": "lumbar_spine",
+      "intensity_level": "gentle",
+      "movement_tags": [
+        "beginner-friendly",
+        "controlled-movement",
+        "minimal-equipment",
+        "low-intensity",
+        "joint-friendly"
+      ]
+    }
+  ]
+}
