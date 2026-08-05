@@ -94,7 +94,13 @@ module Catalog
 
     def build_primary_muscle
       key = self.class.taxonomy_key(@raw["target"])
-      return nil if key.nil?
+      if key.nil?
+        # `target` was present but held nothing usable, e.g. "()" or "--".
+        # Without a primary muscle an exercise cannot be counted in volume
+        # metrics, so reject it rather than let Sync link nothing.
+        @errors << "unusable target" unless blank_value?(@raw["target"])
+        return nil
+      end
 
       Muscle.new(
         key: key,

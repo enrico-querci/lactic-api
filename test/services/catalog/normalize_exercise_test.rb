@@ -201,6 +201,21 @@ module Catalog
       assert_includes result.errors, "missing name"
     end
 
+    test "a target that is present but unusable is rejected" do
+      result = normalize("target" => "()")
+
+      assert_not result.valid?
+      assert_nil result.primary_muscle
+      assert_includes result.errors, "unusable target"
+    end
+
+    test "a valid record always carries a primary muscle" do
+      result = normalize
+
+      assert result.valid?
+      assert_not_nil result.primary_muscle
+    end
+
     test "a non-hash input is rejected rather than raising" do
       result = NormalizeExercise.call(nil)
 
