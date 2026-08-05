@@ -33,6 +33,9 @@ Rails.application.routes.draw do
         end
 
         resources :exercises, only: %i[index show create update destroy]
+        # Singular `resource` would default to a plural controller name; this
+        # is a singleton, so point it at the singular one.
+        resource :exercise_taxonomy, only: %i[show], controller: "exercise_taxonomy"
 
         resources :programs, only: %i[index show create update destroy] do
           resources :weeks, only: %i[index show create update destroy] do
