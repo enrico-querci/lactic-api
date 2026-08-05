@@ -30,12 +30,19 @@ module Catalog
       # exists so a provider bug cannot spin forever.
       MAX_PAGES = 500
 
+      # Fraction of the advertised per-minute limit actually used. The
+      # provider's counter and ours will never agree exactly, so leaving
+      # headroom is cheaper than discovering the disagreement as a 429.
+      RATE_LIMIT_HEADROOM = 0.85
+
       Page = Data.define(:records, :total, :count)
 
       def initialize(api_key: ENV["WORKOUTX_API_KEY"], transport: HttpTransport.new, sleeper: nil)
         @api_key = api_key.to_s.strip
         @transport = transport
         @sleeper = sleeper || ->(seconds) { sleep(seconds) }
+        @min_interval = nil
+        @last_request_at = nil
       end
 
       def source = SOURCE
@@ -70,6 +77,8 @@ module Catalog
         pages = 0
 
         loop do
+          pace_for_rate_limit if pages.positive?
+
           page = fetch_page(limit: page_size, offset: offset)
           break if page.records.empty?
 
@@ -80,6 +89,25 @@ module Catalog
           break if pages >= MAX_PAGES
           break if page.total.is_a?(Integer) && offset >= page.total
         end
+      end
+
+      # Walking a 1,327-record catalog at the free plan's 10-record page cap is
+      # ~133 sequential requests against a documented 30/minute limit. Firing
+      # them back to back exhausts the window in seconds, and the retry backoff
+      # is measured in seconds while a rate window is measured in a minute — so
+      # the run would fail partway having spent quota on 429s.
+      #
+      # The pace comes from the provider's own X-RateLimit-Limit header rather
+      # than a hardcoded number, so a paid tier with a higher limit runs faster
+      # without a code change, and an unknown limit means no delay at all.
+      def pace_for_rate_limit
+        interval = @min_interval
+        return if interval.nil? || interval <= 0
+
+        elapsed = @last_request_at ? Process.clock_gettime(Process::CLOCK_MONOTONIC) - @last_request_at : nil
+        return if elapsed && elapsed >= interval
+
+        @sleeper.call(elapsed ? interval - elapsed : interval)
       end
 
       # Reports the catalog size without walking it, so a sync can tell whether
@@ -137,8 +165,21 @@ module Catalog
 
         with_retries do
           response = @transport.get(uri.to_s, headers: { "X-WorkoutX-Key" => @api_key, "Accept" => "application/json" })
+          note_rate_limit(response)
           interpret(response)
         end
+      end
+
+      # Learns the pace from the provider instead of hardcoding it, so a paid
+      # tier with a higher ceiling runs faster with no code change, and an
+      # unreported limit means no delay at all.
+      def note_rate_limit(response)
+        @last_request_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        limit = response.headers["x-ratelimit-limit"].to_i
+        return unless limit.positive?
+
+        @min_interval = 60.0 / (limit * RATE_LIMIT_HEADROOM)
       end
 
       def interpret(response)
