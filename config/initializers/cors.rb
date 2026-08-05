@@ -9,7 +9,18 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     resource "/api/*",
       headers: :any,
       methods: %i[get post put patch delete options head],
-      expose: %w[Authorization],
+      # A browser can only read a response header on a cross-origin request if
+      # it is listed here. The pagination metadata deliberately travels in
+      # headers rather than a wrapper object, so without this the web client
+      # sees null for all of them and silently renders no pagination controls —
+      # which is exactly what happened before this was added.
+      expose: %w[
+        Authorization
+        X-Total-Count
+        X-Page
+        X-Per-Page
+        X-Total-Pages
+      ],
       max_age: 3600
   end
 end

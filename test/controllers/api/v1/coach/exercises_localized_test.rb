@@ -158,6 +158,25 @@ class Api::V1::Coach::ExercisesLocalizedTest < ActionDispatch::IntegrationTest
     assert_operator response.headers["X-Total-Pages"].to_i, :>=, 2
   end
 
+  test "pagination headers are readable cross-origin" do
+    # A browser can only read a response header on a cross-origin request when
+    # the server lists it in Access-Control-Expose-Headers. The web client and
+    # the API are on different origins in every environment, so without this
+    # the headers arrive and are invisible, and pagination silently vanishes.
+    #
+    # Every other test here passes without the exposure, because Rails
+    # integration tests are not subject to CORS. This one sends an Origin.
+    get "/api/v1/coach/exercises",
+      params: { per_page: 2 },
+      headers: auth_headers_for(@coach).merge("Origin" => "http://localhost:3001")
+
+    exposed = response.headers["Access-Control-Expose-Headers"].to_s.downcase
+
+    %w[x-total-count x-page x-per-page x-total-pages].each do |header|
+      assert_includes exposed, header, "#{header} must be exposed or the client cannot read it"
+    end
+  end
+
   test "pages do not overlap" do
     first = get_index(params: { per_page: 2, page: 1 }).map { |r| r["id"] }
     second = get_index(params: { per_page: 2, page: 2 }).map { |r| r["id"] }
