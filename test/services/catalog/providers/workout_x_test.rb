@@ -213,6 +213,42 @@ module Catalog
         assert_equal 1, provider.fetch_page.records.size
         assert_equal 2, transport.calls.size
       end
+
+      # --- Rate limit pacing --------------------------------------------------
+
+      test "paces requests from the provider's advertised per-minute limit" do
+        delays = []
+        pages = Array.new(3) { |i| ok(page_body([ { "id" => i.to_s } ], total: 3)) }
+        transport = FakeTransport.new(pages)
+        # 30/min with 0.85 headroom => one request roughly every 2.35s.
+        transport.define_singleton_method(:get) do |url, headers: {}|
+          @calls << { url: url, headers: headers }
+          HttpTransport::Response.new(
+            status: 200,
+            body: JSON.generate({ "total" => 3, "count" => 1, "data" => [ { "id" => @calls.size.to_s } ] }),
+            headers: { "x-ratelimit-limit" => "30" }
+          )
+        end
+        provider = WorkoutX.new(api_key: "k", transport: transport, sleeper: ->(s) { delays << s })
+
+        provider.each_record(page_size: 1).first(3)
+
+        assert_operator delays.size, :>=, 1, "expected pacing between pages"
+        assert_in_delta 60.0 / (30 * WorkoutX::RATE_LIMIT_HEADROOM), delays.first, 0.3
+      end
+
+      test "does not pace when the provider reports no rate limit" do
+        delays = []
+        transport = FakeTransport.new([
+          ok(page_body([ { "id" => "1" } ], total: 2)),
+          ok(page_body([ { "id" => "2" } ], total: 2))
+        ])
+        provider = WorkoutX.new(api_key: "k", transport: transport, sleeper: ->(s) { delays << s })
+
+        provider.each_record(page_size: 1).to_a
+
+        assert_empty delays
+      end
     end
   end
 end
