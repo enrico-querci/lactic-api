@@ -20,6 +20,31 @@ module Catalog
 
     REQUIRED_FIELDS = %w[id name target gifUrl].freeze
 
+    # The provider uses two different vocabularies for the same muscles. A
+    # `target` is drawn from a closed 19-value list, but `secondaryMuscles` is
+    # free text, and it names several of those same muscles differently:
+    # "Quadriceps" for Quads, "Chest" for Pectorals, "Shoulders" for Delts.
+    #
+    # Left alone, each pair becomes two unrelated rows in `muscles`, and a
+    # coach filtering by Quads silently misses every exercise where quads are
+    # a secondary muscle.
+    #
+    # Derived from a 110-record sample spread across the catalog, which turned
+    # up 22 distinct secondary values. Deliberately conservative: it maps only
+    # pairs that are unambiguously the same muscle. Values with no clear
+    # equivalent in the primary vocabulary — Core, Obliques, Hip Flexors,
+    # Lower Back, Rhomboids, Ankles, Feet — are left as muscles in their own
+    # right rather than forced into a near-enough bucket.
+    MUSCLE_ALIASES = {
+      "chest" => "pectorals",
+      "upper_chest" => "pectorals",
+      "quadriceps" => "quads",
+      "shoulders" => "delts",
+      "rear_deltoids" => "delts",
+      "latissimus_dorsi" => "lats",
+      "trapezius" => "traps"
+    }.freeze
+
     Muscle = Data.define(:key, :name, :region)
     Equipment = Data.define(:key, :name)
     Animation = Data.define(:provider_url, :provider_media_uid, :mime_type)
@@ -80,6 +105,13 @@ module Catalog
       value.to_s.gsub(/\(.*?\)/, " ").squish.presence
     end
 
+    # Taxonomy key for a muscle, collapsing the provider's synonyms onto one
+    # canonical key so primary and secondary references agree.
+    def self.muscle_key(value)
+      key = taxonomy_key(value)
+      key && MUSCLE_ALIASES.fetch(key, key)
+    end
+
     private
 
     def validate_required_fields
@@ -93,7 +125,7 @@ module Catalog
     end
 
     def build_primary_muscle
-      key = self.class.taxonomy_key(@raw["target"])
+      key = self.class.muscle_key(@raw["target"])
       if key.nil?
         # `target` was present but held nothing usable, e.g. "()" or "--".
         # Without a primary muscle an exercise cannot be counted in volume
@@ -119,7 +151,7 @@ module Catalog
     def build_secondary_muscles(primary)
       Array(@raw["secondaryMuscles"])
         .filter_map do |value|
-          key = self.class.taxonomy_key(value)
+          key = self.class.muscle_key(value)
           next if key.nil? || key == primary&.key
 
           Muscle.new(key: key, name: self.class.taxonomy_name(value), region: nil)

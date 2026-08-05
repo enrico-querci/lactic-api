@@ -133,6 +133,60 @@ module Catalog
       assert result.valid?
     end
 
+    # --- Muscle synonyms ----------------------------------------------------
+    #
+    # The provider names the same muscle differently depending on whether it is
+    # a target or a secondary muscle. Without collapsing them, `muscles` ends
+    # up with two unrelated rows per pair and a coach filtering by Quads misses
+    # every exercise where quads are secondary.
+
+    test "a secondary synonym resolves to the primary vocabulary key" do
+      result = normalize("secondaryMuscles" => [ "Quadriceps", "Chest", "Shoulders" ])
+
+      assert_equal %w[quads pectorals delts], result.secondary_muscles.map(&:key)
+    end
+
+    test "every observed synonym maps onto a canonical key" do
+      {
+        "Chest" => "pectorals",
+        "Upper Chest" => "pectorals",
+        "Quadriceps" => "quads",
+        "Shoulders" => "delts",
+        "Rear Deltoids" => "delts",
+        "Latissimus Dorsi" => "lats",
+        "Trapezius" => "traps"
+      }.each do |provider_value, canonical|
+        assert_equal canonical, NormalizeExercise.muscle_key(provider_value), provider_value
+      end
+    end
+
+    test "a synonym of the primary muscle is dropped as a duplicate" do
+      # target is "Abs" in the fixture; use a record whose target is Pectorals.
+      result = normalize("target" => "Pectorals", "secondaryMuscles" => [ "Chest", "Triceps" ])
+
+      assert_equal "pectorals", result.primary_muscle.key
+      assert_equal [ "triceps" ], result.secondary_muscles.map(&:key)
+    end
+
+    test "muscles with no primary equivalent keep their own identity" do
+      result = normalize("secondaryMuscles" => [ "Core", "Obliques", "Hip Flexors", "Rhomboids", "Lower Back" ])
+
+      assert_equal %w[core obliques hip_flexors rhomboids lower_back], result.secondary_muscles.map(&:key)
+    end
+
+    test "a target expressed as a synonym is also canonicalized" do
+      assert_equal "quads", normalize("target" => "Quadriceps").primary_muscle.key
+    end
+
+    test "aliasing applies to muscles only, not to equipment" do
+      # "Weighted" and friends must not be run through a muscle alias table.
+      assert_equal "chest", NormalizeExercise.taxonomy_key("Chest")
+      assert_equal "pectorals", NormalizeExercise.muscle_key("Chest")
+
+      result = normalize("equipment" => "Body Weight")
+      assert_equal [ "body_weight" ], result.equipment.map(&:key)
+    end
+
     # --- Assignability ------------------------------------------------------
 
     test "strength work is assignable under a reps-only v1" do
