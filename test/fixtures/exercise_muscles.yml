@@ -8,6 +8,11 @@ situp_secondary:
   muscle: hip_flexors
   role: secondary
 
+situp_secondary_lower_back:
+  exercise: provider_situp
+  muscle: lower_back
+  role: secondary
+
 treadmill_primary:
   exercise: provider_treadmill
   muscle: cardiovascular_system

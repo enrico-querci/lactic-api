@@ -32,7 +32,7 @@ Rails.application.routes.draw do
           resources :progress, only: %i[index show], controller: "client_progress"
         end
 
-        resources :exercises, only: %i[index create update destroy]
+        resources :exercises, only: %i[index show create update destroy]
 
         resources :programs, only: %i[index show create update destroy] do
           resources :weeks, only: %i[index show create update destroy] do
