@@ -36,13 +36,25 @@ module Catalog
     # Lower Back, Rhomboids, Ankles, Feet — are left as muscles in their own
     # right rather than forced into a near-enough bucket.
     MUSCLE_ALIASES = {
+      # Found in a 110-record sample.
       "chest" => "pectorals",
       "upper_chest" => "pectorals",
       "quadriceps" => "quads",
       "shoulders" => "delts",
       "rear_deltoids" => "delts",
       "latissimus_dorsi" => "lats",
-      "trapezius" => "traps"
+      "trapezius" => "traps",
+
+      # Found only after importing the full 1,327-record catalog. The sample
+      # was too small to contain them, which is the honest limitation of
+      # deriving a mapping from a sample: it finds the common pairs and misses
+      # the long tail. "Deltoids" alone accounted for 28 exercises that a
+      # filter on Delts would have silently missed.
+      "deltoids" => "delts",
+      "abdominals" => "abs",
+      "lower_abs" => "abs",       # a training term for a region of the same muscle
+      "soleus" => "calves",       # one of the two calf muscles; Calves is the umbrella
+      "inner_thighs" => "adductors"
     }.freeze
 
     Muscle = Data.define(:key, :name, :region)
