@@ -112,4 +112,12 @@ namespace :catalog do
   rescue Catalog::ResetCatalog::CountMismatch => e
     abort "Refusing to reset. #{e.message}"
   end
+
+  desc "Fold duplicate muscle rows onto their canonical key (idempotent, no provider calls)"
+  task merge_muscle_aliases: :environment do
+    before = Muscle.count
+    report = Catalog::MergeMuscleAliases.call
+    puts report
+    puts "muscles: #{before} -> #{Muscle.count}"
+  end
 end
