@@ -249,7 +249,6 @@ module Catalog
 
         assert_empty delays
       end
-
     end
   end
 end
