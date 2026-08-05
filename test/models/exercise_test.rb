@@ -211,7 +211,7 @@ class ExerciseTest < ActiveSupport::TestCase
   test "primary and secondary muscles" do
     exercise = exercises(:provider_situp)
     assert_equal muscles(:abs), exercise.primary_muscle
-    assert_equal [ muscles(:hip_flexors) ], exercise.secondary_muscles
+    assert_equal [ muscles(:hip_flexors), muscles(:lower_back) ], exercise.secondary_muscles
   end
 
   test "exercise without muscle links has no primary muscle" do
@@ -227,9 +227,11 @@ class ExerciseTest < ActiveSupport::TestCase
   test "destroying an exercise destroys its catalog associations" do
     exercise = exercises(:provider_situp)
 
-    assert_difference [ "ExerciseTranslation.count", "ExerciseMuscle.count" ], -2 do
-      assert_difference [ "ExerciseEquipment.count", "ExerciseMedium.count" ], -1 do
-        exercise.destroy!
+    assert_difference "ExerciseTranslation.count", -2 do
+      assert_difference "ExerciseMuscle.count", -3 do
+        assert_difference [ "ExerciseEquipment.count", "ExerciseMedium.count" ], -1 do
+          exercise.destroy!
+        end
       end
     end
   end

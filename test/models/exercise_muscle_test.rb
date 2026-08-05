@@ -53,6 +53,7 @@ class ExerciseMuscleTest < ActiveSupport::TestCase
   test "role scopes" do
     links = exercises(:provider_situp).exercise_muscles
     assert_equal [ exercise_muscles(:situp_primary) ], links.primary.to_a
-    assert_equal [ exercise_muscles(:situp_secondary) ], links.secondary.to_a
+    assert_equal [ exercise_muscles(:situp_secondary), exercise_muscles(:situp_secondary_lower_back) ].sort_by(&:id),
+      links.secondary.to_a.sort_by(&:id)
   end
 end

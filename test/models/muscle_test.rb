@@ -25,8 +25,15 @@ class MuscleTest < ActiveSupport::TestCase
 
   test "region groups muscles the way the provider groups body parts" do
     assert_equal "Waist", muscles(:abs).region
-    assert_includes Muscle.in_region("Waist"), muscles(:hip_flexors)
+    assert_includes Muscle.in_region("Waist"), muscles(:abs)
     assert_not_includes Muscle.in_region("Waist"), muscles(:pectorals)
+  end
+
+  test "a secondary-only muscle has no region" do
+    # `bodyPart` describes the exercise's target, so a muscle that only ever
+    # appears in secondaryMuscles has nothing to derive a region from.
+    assert_nil muscles(:hip_flexors).region
+    assert_nil muscles(:lower_back).region
   end
 
   test "reaches exercises through the join table" do

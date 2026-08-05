@@ -15,10 +15,17 @@ triceps:
   name: Triceps
   region: Upper Arms
 
+# Secondary-only muscles: they appear in the provider's open `secondaryMuscles`
+# vocabulary but never as a `target`, so they carry no region.
 hip_flexors:
   key: hip_flexors
   name: Hip Flexors
-  region: Waist
+  region:
+
+lower_back:
+  key: lower_back
+  name: Lower Back
+  region:
 
 cardiovascular_system:
   key: cardiovascular_system

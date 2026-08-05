@@ -15,6 +15,9 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
   validates :role, presence: true
+  # Nil means "no explicit preference", which lets a request fall through to
+  # Accept-Language and then to English.
+  validates :locale, inclusion: { in: ExerciseTranslation::LOCALES }, allow_nil: true
   validate :coach_cannot_have_coach
 
   scope :coaches, -> { where(role: :coach) }

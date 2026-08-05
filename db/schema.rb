@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_090500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,7 +28,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090500) do
     t.datetime "updated_at", null: false
     t.integer "updated_count", default: 0, null: false
     t.index ["source", "started_at"], name: "index_catalog_sync_runs_on_source_and_started_at"
-    t.check_constraint "status::text = ANY (ARRAY['running'::character varying, 'succeeded'::character varying, 'failed'::character varying]::text[])", name: "catalog_sync_runs_status"
+    t.check_constraint "status::text = ANY (ARRAY['running'::character varying::text, 'succeeded'::character varying::text, 'failed'::character varying::text])", name: "catalog_sync_runs_status"
   end
 
   create_table "client_invitations", force: :cascade do |t|
@@ -93,7 +93,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090500) do
     t.index ["exercise_id", "kind", "position"], name: "index_exercise_media_on_exercise_id_and_kind_and_position", unique: true
     t.index ["exercise_id"], name: "index_exercise_media_on_exercise_id"
     t.check_constraint "\"position\" > 0", name: "exercise_media_position_positive"
-    t.check_constraint "kind::text = ANY (ARRAY['animation'::character varying, 'image'::character varying, 'video'::character varying]::text[])", name: "exercise_media_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['animation'::character varying::text, 'image'::character varying::text, 'video'::character varying::text])", name: "exercise_media_kind"
   end
 
   create_table "exercise_muscles", force: :cascade do |t|
@@ -107,7 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090500) do
     t.index ["exercise_id"], name: "index_exercise_muscles_on_exercise_id"
     t.index ["exercise_id"], name: "index_exercise_muscles_on_single_primary", unique: true, where: "((role)::text = 'primary'::text)"
     t.index ["muscle_id"], name: "index_exercise_muscles_on_muscle_id"
-    t.check_constraint "role::text = ANY (ARRAY['primary'::character varying, 'secondary'::character varying]::text[])", name: "exercise_muscles_role"
+    t.check_constraint "role::text = ANY (ARRAY['primary'::character varying::text, 'secondary'::character varying::text])", name: "exercise_muscles_role"
   end
 
   create_table "exercise_translations", force: :cascade do |t|
@@ -124,7 +124,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090500) do
     t.index ["exercise_id", "locale"], name: "index_exercise_translations_on_exercise_id_and_locale", unique: true
     t.index ["exercise_id"], name: "index_exercise_translations_on_exercise_id"
     t.index ["name"], name: "index_exercise_translations_on_name"
-    t.check_constraint "translation_source::text = ANY (ARRAY['provider'::character varying, 'machine'::character varying, 'human'::character varying]::text[])", name: "exercise_translations_source"
+    t.check_constraint "translation_source::text = ANY (ARRAY['provider'::character varying::text, 'machine'::character varying::text, 'human'::character varying::text])", name: "exercise_translations_source"
   end
 
   create_table "exercises", force: :cascade do |t|
@@ -217,6 +217,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090500) do
     t.bigint "coach_id"
     t.datetime "created_at", null: false
     t.string "email", null: false
+    t.string "locale"
     t.string "name", null: false
     t.string "provider"
     t.string "provider_uid"
