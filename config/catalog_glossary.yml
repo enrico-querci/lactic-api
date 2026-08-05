@@ -1,0 +1,109 @@
+# Fitness glossary for Italian catalog content.
+#
+# Two jobs:
+#
+#   1. It supplies the canonical Italian term for every taxonomy value, which
+#      is what `Catalog::Translation::DescriptionBuilder` composes generated
+#      descriptions from.
+#   2. It keeps terminology consistent. A general-purpose translator renders
+#      "Lats" as "Latissimi", "Gran dorsale" or "Dorsali" depending on the
+#      surrounding sentence; a coach reading a catalog wants one word.
+#
+# Anything missing here falls back to the English term rather than guessing,
+# which is visible and fixable. Add entries as the provider's vocabulary grows.
+muscles:
+  Abductors: Abduttori
+  Abs: Addominali
+  Adductors: Adduttori
+  Ankles: Caviglie
+  Biceps: Bicipiti
+  Calves: Polpacci
+  Cardiovascular System: Sistema cardiovascolare
+  Core: Core
+  Delts: Deltoidi
+  Feet: Piedi
+  Forearms: Avambracci
+  Glutes: Glutei
+  Hamstrings: Ischiocrurali
+  Hip Flexors: Flessori dell'anca
+  Lats: Dorsali
+  Levator Scapulae: Elevatore della scapola
+  Lower Back: Zona lombare
+  Obliques: Obliqui
+  Pectorals: Pettorali
+  Quads: Quadricipiti
+  Rhomboids: Romboidi
+  Serratus Anterior: Dentato anteriore
+  Spine: Colonna vertebrale
+  Traps: Trapezi
+  Triceps: Tricipiti
+  Upper Back: Parte alta della schiena
+
+# The provider's coarse `bodyPart` grouping.
+regions:
+  Back: schiena
+  Cardio: cardio
+  Chest: petto
+  Lower Arms: avambracci
+  Lower Legs: parte bassa delle gambe
+  Neck: collo
+  Shoulders: spalle
+  Upper Arms: parte alta delle braccia
+  Upper Legs: parte alta delle gambe
+  Waist: addome
+
+equipment:
+  Assisted: Assistito
+  Band: Elastico
+  Barbell: Bilanciere
+  Body Weight: Corpo libero
+  Bosu Ball: Bosu
+  Cable: Cavi
+  Dumbbell: Manubrio
+  Elliptical Machine: Ellittica
+  Exercise Ball: Fitball
+  Ez Barbell: Bilanciere EZ
+  Hammer: Martello
+  Kettlebell: Kettlebell
+  Leverage Machine: Macchina a leva
+  Medicine Ball: Palla medica
+  Olympic Barbell: Bilanciere olimpico
+  Resistance Band: Banda elastica
+  Roller: Rullo
+  Rope: Corda
+  Skierg Machine: Skierg
+  Sled Machine: Slitta
+  Smith Machine: Multipower
+  Stability Ball: Palla da stabilità
+  Stationary Bike: Cyclette
+  Stepmill Machine: Stepmill
+  Tennis Ball: Palla da tennis
+  Tire: Pneumatico
+  Trap Bar: Trap bar
+  Upper Body Ergometer: Ergometro per la parte superiore
+  Weighted: Con sovraccarico
+  Wheel Roller: Ruota per addominali
+
+categories:
+  strength: forza
+  cardio: cardio
+  balance: equilibrio
+  flexibility: flessibilità
+  stretching: stretching
+  plyometrics: pliometria
+  powerlifting: powerlifting
+  olympic weightlifting: sollevamento pesi olimpico
+
+difficulties:
+  beginner: principiante
+  intermediate: intermedio
+  advanced: avanzato
+
+mechanics:
+  isolation: di isolamento
+  compound: multiarticolare
+
+forces:
+  push: di spinta
+  pull: di trazione
+  static: statico

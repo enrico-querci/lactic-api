@@ -32,5 +32,32 @@ namespace :catalog do
     puts "  deactivated: #{run.deactivated_count}"
     puts "  rejected:    #{run.rejected_count}"
     puts "  notes:       #{run.error_summary}" if run.error_summary.present?
+
+    # Translation belongs to synchronization, never to a user request, so it
+    # runs here rather than being triggered by a read.
+    puts
+    Rake::Task["catalog:translate"].invoke
+  end
+
+  desc "Generate Italian for catalog exercises whose English changed (idempotent)"
+  task translate: :environment do
+    adapter = Catalog::Translation::GoogleAdapter.new
+
+    unless adapter.configured?
+      puts "Skipping translation: GOOGLE_TRANSLATE_API_KEY is not set."
+      puts "Italian falls back to English until a provider is configured."
+      next
+    end
+
+    puts "Translating with #{adapter.name}..."
+    report = Catalog::TranslateCatalog.call(adapter: adapter)
+
+    puts "Considered #{report.considered} exercises"
+    puts "  translated:      #{report.translated}"
+    puts "  already current: #{report.skipped}"
+    puts "  human-reviewed:  #{report.protected_count} (left alone)"
+    puts "  without english: #{report.no_source}"
+    puts "  failed:          #{report.failed}"
+    puts "  characters sent: #{report.characters}"
   end
 end
