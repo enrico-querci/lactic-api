@@ -1,0 +1,82 @@
+# Reference taxonomy for the provider exercise catalog.
+#
+# Seeded by `Catalog::TaxonomySeeder` (bin/rails catalog:seed_taxonomy).
+# Idempotent: keyed on `key`, safe to re-run.
+#
+# MUSCLES
+# These are the 19 values published by the provider's /v1/exercises/targetList,
+# which is the CLOSED vocabulary used for an exercise's primary muscle.
+#
+# `secondaryMuscles` is a SEPARATE, OPEN vocabulary — the live data contains
+# values such as "Hip Flexors" and "Lower Back" that never appear in
+# targetList. The importer therefore creates unknown muscles on demand with a
+# null region rather than rejecting them. Seeding only covers what we can
+# describe well.
+#
+# `region` is the provider's coarse `bodyPart` grouping. Verified functionally
+# determined by the muscle across a 140-record sample covering 17 of the 19
+# targets. The two marked `inferred` below were not observed in that sample;
+# their region is anatomically reasonable but unconfirmed, and the importer
+# will correct them from live data if it disagrees.
+muscles:
+  - { key: abductors,             name: "Abductors",             region: "Upper Legs" }
+  - { key: abs,                   name: "Abs",                   region: "Waist" }
+  - { key: adductors,             name: "Adductors",             region: "Upper Legs" }
+  - { key: biceps,                name: "Biceps",                region: "Upper Arms" }
+  - { key: calves,                name: "Calves",                region: "Lower Legs" }
+  - { key: cardiovascular_system, name: "Cardiovascular System", region: "Cardio" }
+  - { key: delts,                 name: "Delts",                 region: "Shoulders" }
+  - { key: forearms,              name: "Forearms",              region: "Lower Arms" }
+  - { key: glutes,                name: "Glutes",                region: "Upper Legs" }
+  - { key: hamstrings,            name: "Hamstrings",            region: "Upper Legs" }
+  - { key: lats,                  name: "Lats",                  region: "Back" }
+  - { key: levator_scapulae,      name: "Levator Scapulae",      region: "Neck" }        # inferred
+  - { key: pectorals,             name: "Pectorals",             region: "Chest" }
+  - { key: quads,                 name: "Quads",                 region: "Upper Legs" }
+  - { key: serratus_anterior,     name: "Serratus Anterior",     region: "Chest" }       # inferred
+  - { key: spine,                 name: "Spine",                 region: "Back" }
+  - { key: traps,                 name: "Traps",                 region: "Back" }
+  - { key: triceps,               name: "Triceps",               region: "Upper Arms" }
+  - { key: upper_back,            name: "Upper Back",            region: "Back" }
+
+# EQUIPMENT
+# The provider publishes 34 equipment strings, but several are COMPOUND —
+# "Dumbbell, Exercise Ball, Tennis Ball" is three items in one field — and
+# several carry a parenthetical qualifier, e.g.
+# "Dumbbell (used As Handles For Deeper Range)".
+#
+# The importer splits on commas and strips the qualifier, so the atomic set
+# below is smaller than 34. Stripping keeps the filter UI usable: a coach
+# filtering "Dumbbell" should not miss exercises tagged with a qualified
+# variant of it.
+equipment:
+  - { key: assisted,             name: "Assisted" }
+  - { key: band,                 name: "Band" }
+  - { key: barbell,              name: "Barbell" }
+  - { key: body_weight,          name: "Body Weight" }
+  - { key: bosu_ball,            name: "Bosu Ball" }
+  - { key: cable,                name: "Cable" }
+  - { key: dumbbell,             name: "Dumbbell" }
+  - { key: elliptical_machine,   name: "Elliptical Machine" }
+  - { key: exercise_ball,        name: "Exercise Ball" }
+  - { key: ez_barbell,           name: "Ez Barbell" }
+  - { key: hammer,               name: "Hammer" }
+  - { key: kettlebell,           name: "Kettlebell" }
+  - { key: leverage_machine,     name: "Leverage Machine" }
+  - { key: medicine_ball,        name: "Medicine Ball" }
+  - { key: olympic_barbell,      name: "Olympic Barbell" }
+  - { key: resistance_band,      name: "Resistance Band" }
+  - { key: roller,               name: "Roller" }
+  - { key: rope,                 name: "Rope" }
+  - { key: skierg_machine,       name: "Skierg Machine" }
+  - { key: sled_machine,         name: "Sled Machine" }
+  - { key: smith_machine,        name: "Smith Machine" }
+  - { key: stability_ball,       name: "Stability Ball" }
+  - { key: stationary_bike,      name: "Stationary Bike" }
+  - { key: stepmill_machine,     name: "Stepmill Machine" }
+  - { key: tennis_ball,          name: "Tennis Ball" }
+  - { key: tire,                 name: "Tire" }
+  - { key: trap_bar,             name: "Trap Bar" }
+  - { key: upper_body_ergometer, name: "Upper Body Ergometer" }
+  - { key: weighted,             name: "Weighted" }
+  - { key: wheel_roller,         name: "Wheel Roller" }
