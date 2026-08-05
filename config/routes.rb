@@ -22,6 +22,14 @@ Rails.application.routes.draw do
       get   "me", to: "me#show"
       patch "me", to: "me#update"
 
+      # Exercise animation proxy. Shared rather than namespaced per role,
+      # because coaches and clients render the same media and only the
+      # visibility rule differs. The path matches what ExerciseBlueprint
+      # serializes as animation_url.
+      resources :exercises, only: [] do
+        resource :animation, only: %i[show], controller: "exercise_animations"
+      end
+
       # Coach endpoints
       namespace :coach do
         resources :client_invitations, only: %i[index create destroy] do

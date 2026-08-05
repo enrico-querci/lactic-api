@@ -21,6 +21,11 @@ module Catalog
       MAX_ATTEMPTS = 3
       BASE_BACKOFF = 0.5
 
+      ACCEPTED_MIME = "image/gif".freeze
+      # Observed media runs to ~700KB. This is a guard against a runaway or
+      # hostile response, not a expectation of the real size.
+      ANIMATION_MAX_BYTES = 8_000_000
+
       # A catalog of ~1,300 records at 100 per page is ~14 requests. This only
       # exists so a provider bug cannot spin forever.
       MAX_PAGES = 500
@@ -83,6 +88,45 @@ module Catalog
         fetch_page(limit: 1, offset: 0).total
       end
 
+      Animation = Data.define(:bytes, :mime_type) do
+        def byte_size = bytes.bytesize
+      end
+
+      # Fetches one animation's bytes with the provider key attached
+      # server-side.
+      #
+      # The provider serves media from the API host and returns 401 without the
+      # key, so a client cannot fetch it directly — that is the whole reason
+      # the Lactic proxy exists.
+      #
+      # Not retried. A coach is waiting on this render, and a retry storm would
+      # multiply an already expensive request: every fetch, including a repeat
+      # of the same image, costs one request from the monthly quota.
+      def fetch_animation(provider_url, max_bytes: ANIMATION_MAX_BYTES)
+        raise Errors::Authentication, "WORKOUTX_API_KEY is not set" unless configured?
+        raise Errors::Schema, "media url is blank" if provider_url.blank?
+        unless provider_url.to_s.start_with?("#{BASE_URL}/")
+          # Refuse to attach the credential to anything but the provider's own
+          # media path. Without this a poisoned provider_url in the database
+          # would send the API key to an arbitrary host.
+          raise Errors::Schema, "media url is not a provider url"
+        end
+
+        response = @transport.get_binary(
+          provider_url,
+          headers: { "X-WorkoutX-Key" => @api_key, "Accept" => ACCEPTED_MIME },
+          max_bytes: max_bytes
+        )
+
+        interpret(response) # maps 401/403/429/5xx to the shared error types
+
+        mime = response.headers["content-type"].to_s.split(";").first.to_s.strip.downcase
+        raise Errors::Schema, "unexpected content type #{mime.inspect}" unless mime == ACCEPTED_MIME
+        raise Errors::Schema, "empty media response" if response.body.empty?
+
+        Animation.new(bytes: response.body, mime_type: mime)
+      end
+
       private
 
       def get(path, params = {})
@@ -112,7 +156,10 @@ module Catalog
       end
 
       def parse(body)
-        parsed = JSON.parse(body)
+        # The transport hands back raw bytes so it can carry binary media
+        # unharmed. JSON is text, and the catalog contains characters such as
+        # the degree sign, so the encoding is applied here rather than there.
+        parsed = JSON.parse(body.to_s.dup.force_encoding("UTF-8"))
         raise Errors::Schema, "expected a JSON object, got #{parsed.class}" unless parsed.is_a?(Hash)
 
         parsed
