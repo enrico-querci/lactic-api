@@ -166,6 +166,21 @@ module Catalog
       assert_equal [ "Barbell", "Exercise Ball" ], exercise.reload.equipment.map(&:name).sort
     end
 
+    test "a secondary synonym links to the same muscle row as the primary vocabulary" do
+      changed = raw_records.map(&:dup)
+      changed[0]["secondaryMuscles"] = [ "Quadriceps" ]
+      sync(changed)
+
+      exercise = Exercise.find_by(source_uid: "0001")
+      quads = Muscle.find_by(key: "quads")
+
+      assert_equal [ quads ], exercise.secondary_muscles
+      # The whole point: no parallel "quadriceps" row, so a Quads filter finds
+      # this exercise.
+      assert_not Muscle.exists?(key: "quadriceps")
+      assert_equal "Quads", quads.name
+    end
+
     test "an unknown secondary muscle is created rather than rejected" do
       changed = raw_records.map(&:dup)
       changed[0]["secondaryMuscles"] = [ "Brand New Muscle" ]
