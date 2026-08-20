@@ -408,8 +408,8 @@ bin/rails zeitwerk:check
 Relevant validation commands:
 
 ```bash
-pnpm lint
-pnpm build
+npm run lint
+npm run build
 ```
 
 ### 6.4 Git and CI
