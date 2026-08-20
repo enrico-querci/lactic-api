@@ -20,10 +20,13 @@ COACH_EMAILS=info@yellowtulip.it
 FRONTEND_URL=https://lactic-web.vercel.app
 RESEND_API_KEY=re_...
 MAIL_FROM=Lactic <noreply@yellowtulip.it>
+SENTRY_DSN=https://...
 ```
 
 `COACH_EMAILS` accepts a comma-separated list. The domain used by `MAIL_FROM`
-must be verified in Resend before invitations can be delivered.
+must be verified in Resend before invitations can be delivered. `SENTRY_DSN`
+is optional — error tracking (`config/initializers/sentry.rb`) is inert
+without it, which is also how local development and the test suite run.
 
 ## Local development
 

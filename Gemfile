@@ -46,6 +46,12 @@ gem "blueprinter", "~> 1.1"
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
+# Error tracking. Top-level (not grouped) since Dockerfile's BUNDLE_WITHOUT
+# only excludes :development by name, but production is the environment that
+# actually needs this.
+gem "sentry-ruby"
+gem "sentry-rails"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

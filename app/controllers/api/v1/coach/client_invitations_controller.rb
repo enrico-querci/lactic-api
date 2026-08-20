@@ -81,6 +81,10 @@ module Api
           true
         rescue StandardError => e
           Rails.logger.error("Client invitation email failed: #{e.class}: #{e.message}")
+          # Previously logger-only: a coach's invite silently never arriving
+          # is invisible unless someone greps production logs. invitation.id
+          # carries no PII by itself and lets the delivery be looked up.
+          Sentry.capture_exception(e, tags: { invitation_id: invitation.id.to_s })
           render json: { error: "The invitation was saved, but the email could not be sent" }, status: :service_unavailable
           false
         end
