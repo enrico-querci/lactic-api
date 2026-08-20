@@ -66,6 +66,16 @@ module Api
       # the animation is unavailable and never sees a provider status code, a
       # provider URL, or anything derived from the key.
       def handle_provider_failure(error, exercise)
+        # Quota is expected exhaustion, and Transient reaches here only after
+        # the provider adapter's own retry loop already gave up on it — both
+        # are excluded globally in config/initializers/sentry.rb. Authentication
+        # (the key is wrong or the plan lacks this endpoint) and Schema (the
+        # response no longer matches what the adapter expects) are the two
+        # shapes that mean something is actually broken and stays broken
+        # until a human looks at it.
+        report_provider_error(error, exercise) if error.is_a?(Catalog::Providers::Errors::Authentication) ||
+                                                    error.is_a?(Catalog::Providers::Errors::Schema)
+
         case error
         when Catalog::Providers::Errors::Quota
           log_failure(exercise, error, 503)
@@ -74,6 +84,10 @@ module Api
           log_failure(exercise, error, 502)
           render_error("Animation unavailable", :bad_gateway)
         end
+      end
+
+      def report_provider_error(error, exercise)
+        Sentry.capture_exception(error, tags: { exercise_id: exercise&.id.to_s })
       end
 
       def render_error(message, status)
