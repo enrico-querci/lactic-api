@@ -76,6 +76,11 @@ Rails.application.routes.draw do
         resources :workout_sessions, only: %i[index show create update]
         resources :exercise_logs, only: %i[create update]
         resources :set_logs, only: %i[create update destroy]
+
+        # Singular `resource` would default to a plural controller name; this
+        # is a singleton (there is exactly one "my account"), so point it at
+        # the singular one. Mirrors the coach exercise_taxonomy precedent.
+        resource :account, only: %i[destroy], controller: "account"
       end
     end
   end
