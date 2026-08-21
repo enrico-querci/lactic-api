@@ -19,9 +19,15 @@ is a workout-management ecosystem for coaches and their clients.
 | Product | Audience | Platform | Purpose | Current state |
 | --- | --- | --- | --- | --- |
 | **Lactic** | Client | iOS | Follow assigned programs and log workouts | Product target |
-| **Lactic Studio** | Coach/Admin | iOS/iPadOS | Manage clients and create training programs | Product target |
+| **Lactic Studio** | Coach/Admin | Web today; iOS/iPadOS planned | Manage clients and create training programs | Coach routes (`/coach/**`) in Lactic Web are implemented and deployed; a native app is a product target |
 | **Lactic Web** | Coach and client | Web | Browser access to both role-specific experiences | Implemented and deployed |
 | **Lactic API** | All clients | Rails API | Shared auth, business logic, persistence, email, and REST API | Implemented and deployed |
+
+**Lactic Studio** names the coach/admin dashboard as a product, independent of which
+surface currently implements it — today that is the coach routes inside Lactic Web;
+a native iOS/iPadOS app remains a future target, not a separate product to track
+alongside it. Coaches are the paying customer, so Lactic Studio is expected to be the
+primary source of revenue; weigh coach-side work accordingly when prioritizing.
 
 **Reference competitor:** CoachPlus (client) / CoachPlus PT (admin).
 
