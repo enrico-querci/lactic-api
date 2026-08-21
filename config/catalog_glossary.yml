@@ -38,6 +38,18 @@ muscles:
   Traps: Trapezi
   Triceps: Tricipiti
   Upper Back: Parte alta della schiena
+  # Not provider vocabulary — these are the legacy exercises.muscle_group
+  # values from the hand-written seeds (db/seeds.rb), predating the
+  # provider import. Two intentionally alias an existing provider term
+  # above: Chest -> Pettorali (same as Pectorals), Quadriceps ->
+  # Quadricipiti (same as Quads). Catalog::Translation::TaxonomyLabels sums
+  # rather than assigns when localizing volume_sets specifically so this
+  # collision merges sets under one badge instead of dropping one side's.
+  Back: Schiena
+  Chest: Pettorali
+  Full Body: Total body
+  Quadriceps: Quadricipiti
+  Shoulders: Spalle
 
 # The provider's coarse `bodyPart` grouping.
 regions:

@@ -2,24 +2,26 @@ module Api
   module V1
     module Coach
       class WorkoutExercisesController < BaseController
+        include Localizable
+
         before_action :set_workout
 
         # GET /api/v1/coach/workouts/:workout_id/workout_exercises
         def index
-          render json: WorkoutExerciseBlueprint.render(@workout.workout_exercises)
+          render json: WorkoutExerciseBlueprint.render(@workout.workout_exercises, locale: current_locale)
         end
 
         # POST /api/v1/coach/workouts/:workout_id/workout_exercises
         def create
           we = @workout.workout_exercises.create!(workout_exercise_params)
-          render json: WorkoutExerciseBlueprint.render(we), status: :created
+          render json: WorkoutExerciseBlueprint.render(we, locale: current_locale), status: :created
         end
 
         # PATCH /api/v1/coach/workouts/:workout_id/workout_exercises/:id
         def update
           we = @workout.workout_exercises.find(params[:id])
           we.update!(workout_exercise_params)
-          render json: WorkoutExerciseBlueprint.render(we)
+          render json: WorkoutExerciseBlueprint.render(we, locale: current_locale)
         end
 
         # DELETE /api/v1/coach/workouts/:workout_id/workout_exercises/:id

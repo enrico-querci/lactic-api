@@ -2,6 +2,8 @@ module Api
   module V1
     module Client
       class ProgramsController < BaseController
+        include Localizable
+
         # GET /api/v1/client/programs
         #
         # Renders the assignment, not the bare program: the web client reads
@@ -30,7 +32,7 @@ module Api
         # client could complete a single workout.
         def show
           assignment = current_user.program_assignments.find_by!(program_id: params[:id])
-          payload = ProgramBlueprint.render_as_hash(assignment.program, view: :extended)
+          payload = ProgramBlueprint.render_as_hash(assignment.program, view: :extended, locale: current_locale)
           render json: payload.merge(assignment_id: assignment.id)
         end
       end

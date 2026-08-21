@@ -10,6 +10,8 @@ module Api
       # Only values that are actually in use are returned, so the UI never
       # offers a filter that would come back empty.
       class ExerciseTaxonomyController < BaseController
+        include Localizable
+
         # GET /api/v1/coach/exercise_taxonomy
         def show
           render json: {
@@ -22,17 +24,23 @@ module Api
 
         private
 
+        # Sorted after translating, not in SQL: an Italian dropdown ordered
+        # by the underlying English name (the old `.order(:name)`) would read
+        # as nonsense — Deltoidi, Avambracci, Glutei, Ischiocrurali, Dorsali.
         def muscles
           Muscle.where(id: ExerciseMuscle.select(:muscle_id))
-                .order(:name)
-                .map { |muscle| { key: muscle.key, name: muscle.name, region: muscle.region } }
+                .map { |muscle| { key: muscle.key, name: muscle_label(muscle.name), region: muscle.region } }
+                .sort_by { |muscle| muscle[:name] }
         end
 
         def equipment
           Equipment.where(id: ExerciseEquipment.select(:equipment_id))
-                   .order(:name)
-                   .map { |item| { key: item.key, name: item.name } }
+                   .map { |item| { key: item.key, name: equipment_label(item.name) } }
+                   .sort_by { |item| item[:name] }
         end
+
+        def muscle_label(name) = Catalog::Translation::TaxonomyLabels.muscle(name, current_locale)
+        def equipment_label(name) = Catalog::Translation::TaxonomyLabels.equipment(name, current_locale)
 
         # Ordered easiest-first rather than alphabetically, because "advanced,
         # beginner, intermediate" reads as nonsense in a filter. Any value the

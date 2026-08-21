@@ -25,3 +25,31 @@ curl_in_chest_day:
   sets: 3
   reps: 12
   rest_seconds: 60
+
+# mixed_vocabulary_day (a dedicated workout, not chest_day — several tests
+# hardcode chest_day's exact composition) pairs bench_press's legacy seed
+# vocabulary ("Chest") against provider_chest_press's provider vocabulary
+# ("Pectorals") on purpose, to test that they merge under one Italian badge.
+bench_in_mixed_vocabulary_day:
+  workout: mixed_vocabulary_day
+  exercise: bench_press
+  position: A
+  sets: 4
+  reps: 10
+  rest_seconds: 90
+
+chest_press_in_mixed_vocabulary_day:
+  workout: mixed_vocabulary_day
+  exercise: provider_chest_press
+  position: B
+  sets: 5
+  reps: 8
+  rest_seconds: 90
+
+bicep_curl_in_mixed_vocabulary_day:
+  workout: mixed_vocabulary_day
+  exercise: bicep_curl
+  position: C
+  sets: 3
+  reps: 12
+  rest_seconds: 60

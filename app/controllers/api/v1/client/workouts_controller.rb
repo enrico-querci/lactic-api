@@ -2,10 +2,12 @@ module Api
   module V1
     module Client
       class WorkoutsController < BaseController
+        include Localizable
+
         # GET /api/v1/client/workouts/:id
         def show
           workout = accessible_workouts.find(params[:id])
-          render json: WorkoutBlueprint.render(workout, view: :extended)
+          render json: WorkoutBlueprint.render(workout, view: :extended, locale: current_locale)
         end
 
         private
