@@ -2,6 +2,8 @@ module Api
   module V1
     module Coach
       class WorkoutTemplatesController < BaseController
+        include Localizable
+
         # GET /api/v1/coach/workout_templates
         def index
           templates = current_user.workout_templates
@@ -46,7 +48,7 @@ module Api
             target_week: target_week,
             day: params[:day].to_i
           )
-          render json: WorkoutBlueprint.render(workout, view: :extended), status: :created
+          render json: WorkoutBlueprint.render(workout, view: :extended, locale: current_locale), status: :created
         end
       end
     end

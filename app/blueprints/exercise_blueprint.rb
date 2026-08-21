@@ -26,13 +26,22 @@ class ExerciseBlueprint < Blueprinter::Base
 
   fields :muscle_group, :video_url, :thumbnail_url
 
-  field :primary_muscle do |exercise, _options|
+  # Only `name` is localized — `key` is the filter value the frontend sends
+  # back on exercise-catalog searches (Catalog::ExerciseSearch matches on
+  # it), and `region` has no coach/client-facing use today (the glossary's
+  # region entries are lowercase prose fragments authored for
+  # DescriptionBuilder, not display labels).
+  field :primary_muscle do |exercise, options|
     muscle = exercise.primary_muscle
-    { key: muscle.key, name: muscle.name, region: muscle.region } if muscle
+    if muscle
+      { key: muscle.key, name: Catalog::Translation::TaxonomyLabels.muscle(muscle.name, options[:locale]), region: muscle.region }
+    end
   end
 
-  field :equipment do |exercise, _options|
-    exercise.equipment.map { |item| { key: item.key, name: item.name } }
+  field :equipment do |exercise, options|
+    exercise.equipment.map do |item|
+      { key: item.key, name: Catalog::Translation::TaxonomyLabels.equipment(item.name, options[:locale]) }
+    end
   end
 
   field :has_animation do |exercise, _options|
@@ -62,8 +71,10 @@ class ExerciseBlueprint < Blueprinter::Base
       exercise.translation_for(options[:locale])&.locale
     end
 
-    field :secondary_muscles do |exercise, _options|
-      exercise.secondary_muscles.map { |muscle| { key: muscle.key, name: muscle.name } }
+    field :secondary_muscles do |exercise, options|
+      exercise.secondary_muscles.map do |muscle|
+        { key: muscle.key, name: Catalog::Translation::TaxonomyLabels.muscle(muscle.name, options[:locale]) }
+      end
     end
   end
 end

@@ -42,6 +42,26 @@ module Catalog
 
         assert_empty missing, "glossary is missing italian for: #{missing.inspect}"
       end
+
+      test "covers every legacy muscle_group value alongside the provider vocabulary" do
+        legacy = %w[Back Chest Full\ Body Quadriceps Shoulders]
+        missing = legacy.reject { |name| Glossary.covers_muscle?(name) }
+
+        assert_empty missing, "glossary is missing italian for legacy value(s): #{missing.inspect}"
+      end
+
+      test "Chest and Pectorals intentionally alias the same italian term" do
+        # Two English vocabularies (hand-seeded exercises vs. the provider
+        # import) both describe the same muscle. A future "cleanup" that
+        # removes the duplicate-looking Chest entry would silently break
+        # Catalog::Translation::TaxonomyLabels.volume_sets, which relies on
+        # both resolving identically to merge a mixed workout into one badge.
+        assert_equal Glossary.muscle("Pectorals"), Glossary.muscle("Chest")
+      end
+
+      test "Quadriceps and Quads intentionally alias the same italian term" do
+        assert_equal Glossary.muscle("Quads"), Glossary.muscle("Quadriceps")
+      end
     end
 
     class DescriptionBuilderTest < ActiveSupport::TestCase

@@ -101,6 +101,22 @@ class Api::V1::Coach::ExercisesLocalizedTest < ActionDispatch::IntegrationTest
     assert_equal [ { "key" => "body_weight", "name" => "Body Weight" } ], row["equipment"]
   end
 
+  test "italian localizes primary_muscle and equipment names, not keys" do
+    row = find_row(get_index(headers: { "Accept-Language" => "it" }), @situp.id)
+
+    assert_equal({ "key" => "abs", "name" => "Addominali", "region" => "Waist" }, row["primary_muscle"])
+    assert_equal [ { "key" => "body_weight", "name" => "Corpo libero" } ], row["equipment"]
+  end
+
+  test "italian localizes secondary_muscles names, not keys" do
+    get "/api/v1/coach/exercises/#{@situp.id}",
+      headers: auth_headers_for(@coach).merge("Accept-Language" => "it")
+    secondary = JSON.parse(response.body)["secondary_muscles"]
+
+    assert_equal [ "Flessori dell'anca", "Zona lombare" ], secondary.map { |m| m["name"] }
+    assert_equal [ "hip_flexors", "lower_back" ], secondary.map { |m| m["key"] }
+  end
+
   test "animation_url points at lactic and never at the provider" do
     row = find_row(get_index, @situp.id)
 

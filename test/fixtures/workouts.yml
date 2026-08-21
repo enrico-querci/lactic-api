@@ -7,3 +7,10 @@ leg_day:
   week: week_one
   name: Leg Workout
   day: 3
+
+# Under week_two, not week_one — week_one's workout count (chest_day,
+# leg_day) is asserted exactly elsewhere (test/models/week_test.rb).
+mixed_vocabulary_day:
+  week: week_two
+  name: Mixed Vocabulary Workout
+  day: 2

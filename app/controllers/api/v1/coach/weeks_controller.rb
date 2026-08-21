@@ -2,30 +2,32 @@ module Api
   module V1
     module Coach
       class WeeksController < BaseController
+        include Localizable
+
         before_action :set_program
 
         # GET /api/v1/coach/programs/:program_id/weeks
         def index
-          render json: WeekBlueprint.render(@program.weeks)
+          render json: WeekBlueprint.render(@program.weeks, locale: current_locale)
         end
 
         # GET /api/v1/coach/programs/:program_id/weeks/:id
         def show
           week = @program.weeks.find(params[:id])
-          render json: WeekBlueprint.render(week, view: :extended)
+          render json: WeekBlueprint.render(week, view: :extended, locale: current_locale)
         end
 
         # POST /api/v1/coach/programs/:program_id/weeks
         def create
           week = @program.weeks.create!(week_params)
-          render json: WeekBlueprint.render(week), status: :created
+          render json: WeekBlueprint.render(week, locale: current_locale), status: :created
         end
 
         # PATCH /api/v1/coach/programs/:program_id/weeks/:id
         def update
           week = @program.weeks.find(params[:id])
           week.update!(week_params)
-          render json: WeekBlueprint.render(week)
+          render json: WeekBlueprint.render(week, locale: current_locale)
         end
 
         # DELETE /api/v1/coach/programs/:program_id/weeks/:id

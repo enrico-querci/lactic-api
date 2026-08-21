@@ -13,6 +13,17 @@ bicep_curl:
   muscle_group: Biceps
   is_custom: false
 
+# Provider-vocabulary muscle_group ("Pectorals") deliberately colliding with
+# bench_press's legacy seed vocabulary ("Chest") — both mean the same thing
+# and both localize to "Pettorali". Exists to prove
+# Catalog::Translation::TaxonomyLabels.volume_sets sums instead of dropping
+# one side when a workout mixes the two vocabularies (see
+# workouts_localized_test.rb).
+provider_chest_press:
+  name: Chest Press
+  muscle_group: Pectorals
+  is_custom: false
+
 custom_exercise:
   name: Coach Special Press
   muscle_group: Chest
