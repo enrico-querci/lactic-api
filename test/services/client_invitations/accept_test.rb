@@ -34,4 +34,31 @@ class ClientInvitations::AcceptTest < ActiveSupport::TestCase
       ClientInvitations::Accept.call(invitation: @invitation, user: @client)
     end
   end
+
+  test "accepts a dotted Gmail invitation matched by its undotted account" do
+    dotted_invitation = ClientInvitation.create!(coach: @coach, email: "mario.rossi@gmail.com")
+    undotted_client = User.create!(name: "Mario Rossi", email: "mariorossi@gmail.com", role: :client)
+
+    ClientInvitations::Accept.call(invitation: dotted_invitation, user: undotted_client)
+
+    assert_equal @coach, undotted_client.reload.coach
+  end
+
+  test "accepts a plus-tagged Gmail invitation matched by its untagged account" do
+    tagged_invitation = ClientInvitation.create!(coach: @coach, email: "mario+lactic@gmail.com")
+    untagged_client = User.create!(name: "Mario", email: "mario@gmail.com", role: :client)
+
+    ClientInvitations::Accept.call(invitation: tagged_invitation, user: untagged_client)
+
+    assert_equal @coach, untagged_client.reload.coach
+  end
+
+  test "rejects dot variants on a non-Gmail domain" do
+    dotted_invitation = ClientInvitation.create!(coach: @coach, email: "mario.rossi@studiofitness.it")
+    undotted_client = User.create!(name: "Mario Rossi", email: "mariorossi@studiofitness.it", role: :client)
+
+    assert_raises(ClientInvitations::Accept::AcceptanceError) do
+      ClientInvitations::Accept.call(invitation: dotted_invitation, user: undotted_client)
+    end
+  end
 end
