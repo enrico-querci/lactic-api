@@ -61,11 +61,20 @@ module Auth
         invitation
       end
 
+      # Coach signup is open: any new Google/Apple identity becomes a
+      # coach unless it came in through a client invitation. The one
+      # failure mode this guards against is an invited client signing in
+      # from the plain login page instead of their invitation link — that
+      # would otherwise silently create them as a coach rather than
+      # linking them to the coach who invited them.
       def role_for_new_user(email, invitation)
         return :client if invitation
-        return :coach if CoachAccess.allowed?(email)
 
-        raise Auth::VerificationError, "An invitation is required to create a client account"
+        if ClientInvitation.pending.where(email: email).where("expires_at > ?", Time.current).exists?
+          raise Auth::VerificationError, "Open your invitation link to join your coach"
+        end
+
+        :coach
       end
 
       def accept_invitation(invitation, user)
