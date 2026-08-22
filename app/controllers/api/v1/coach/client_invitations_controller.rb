@@ -12,9 +12,14 @@ module Api
         def create
           email = normalized_email
           return unless invitable?(email)
-          return unless email_delivery_configured?
 
           invitation = current_user.client_invitations.pending.find_or_initialize_by(email: email)
+          # Renewing an invitation that's already pending doesn't consume a
+          # new slot — it's already counted in client_slots_used — so the
+          # limit only applies to a genuinely new invitation.
+          return unless invitation.persisted? || client_limit_available?
+          return unless email_delivery_configured?
+
           token = invitation.persisted? ? invitation.renew! : create_invitation!(invitation)
           return unless deliver_invitation(invitation, token)
 
@@ -40,6 +45,16 @@ module Api
         end
 
         private
+
+        def client_limit_available?
+          return true if current_user.can_invite_client?
+
+          render json: {
+            error: "You've reached your plan's client limit",
+            code: "client_limit_reached"
+          }, status: :payment_required
+          false
+        end
 
         def normalized_email
           params.require(:email).to_s.strip.downcase

@@ -11,6 +11,7 @@ class User < ApplicationRecord
   has_many :workout_sessions, foreign_key: :client_id, dependent: :destroy, inverse_of: :client
   has_many :refresh_tokens, dependent: :delete_all
   has_many :client_invitations, foreign_key: :coach_id, dependent: :destroy, inverse_of: :coach
+  has_one :coach_subscription, dependent: :destroy
 
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
@@ -22,6 +23,25 @@ class User < ApplicationRecord
 
   scope :coaches, -> { where(role: :coach) }
   scope :clients, -> { where(role: :client) }
+
+  # nil means unlimited. COACH_EMAILS is a comp list, not just a signup
+  # gate: it grants unlimited access regardless of billing state, so it
+  # keeps working even if RevenueCat is misconfigured or unreachable.
+  def client_limit
+    return nil if CoachAccess.allowed?(email)
+
+    coach_subscription&.client_limit || Billing::Plans::FREE_CLIENT_LIMIT
+  end
+
+  # Pending invitations count against the limit too, otherwise a Free
+  # coach could send unlimited invitations and let them sit unaccepted.
+  def client_slots_used
+    clients.count + client_invitations.pending.where("expires_at > ?", Time.current).count
+  end
+
+  def can_invite_client?
+    client_limit.nil? || client_slots_used < client_limit
+  end
 
   private
 
