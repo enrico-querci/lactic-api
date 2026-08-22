@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_090100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,6 +44,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_140000) do
     t.index ["coach_id", "email"], name: "index_pending_client_invitations_on_coach_and_email", unique: true, where: "((accepted_at IS NULL) AND (revoked_at IS NULL))"
     t.index ["coach_id"], name: "index_client_invitations_on_coach_id"
     t.index ["token_digest"], name: "index_client_invitations_on_token_digest", unique: true
+  end
+
+  create_table "coach_subscriptions", force: :cascade do |t|
+    t.boolean "auto_renew", default: true, null: false
+    t.datetime "billing_issue_at"
+    t.datetime "created_at", null: false
+    t.string "entitlement_id"
+    t.string "environment", default: "PRODUCTION", null: false
+    t.datetime "expires_at"
+    t.string "plan_key", null: false
+    t.string "product_id"
+    t.string "revenuecat_app_user_id"
+    t.string "store"
+    t.datetime "synced_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_coach_subscriptions_on_user_id", unique: true
+    t.check_constraint "environment::text = ANY (ARRAY['PRODUCTION'::character varying, 'SANDBOX'::character varying]::text[])", name: "coach_subscriptions_environment"
+    t.check_constraint "plan_key::text = ANY (ARRAY['free'::character varying, 'pro'::character varying, 'pro_plus'::character varying, 'unlimited'::character varying, 'founding'::character varying]::text[])", name: "coach_subscriptions_plan_key"
   end
 
   create_table "equipment", force: :cascade do |t|
@@ -201,6 +220,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_140000) do
     t.index ["user_id"], name: "index_refresh_tokens_on_user_id"
   end
 
+  create_table "revenue_cat_webhook_events", force: :cascade do |t|
+    t.string "app_user_id"
+    t.datetime "created_at", null: false
+    t.string "environment"
+    t.string "event_id", null: false
+    t.string "event_type", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "processed_at"
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_revenue_cat_webhook_events_on_event_id", unique: true
+  end
+
   create_table "set_logs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "exercise_log_id", null: false
@@ -290,6 +321,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_140000) do
   end
 
   add_foreign_key "client_invitations", "users", column: "coach_id"
+  add_foreign_key "coach_subscriptions", "users"
   add_foreign_key "exercise_equipment", "equipment"
   add_foreign_key "exercise_equipment", "exercises"
   add_foreign_key "exercise_logs", "workout_exercises"

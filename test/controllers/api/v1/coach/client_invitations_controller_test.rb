@@ -74,6 +74,48 @@ class Api::V1::Coach::ClientInvitationsControllerTest < ActionDispatch::Integrat
     assert invitation.reload.revoked_at.present?
   end
 
+  test "create is blocked at the plan's client limit" do
+    # coach_john already has 2 clients (alice, bob) in fixtures; one more
+    # reaches the free plan's limit of 3.
+    User.create!(name: "Third Client", email: "third@example.com", role: :client, coach: @coach)
+
+    assert_no_difference "ClientInvitation.count" do
+      post "/api/v1/coach/client_invitations",
+        params: { email: "one-too-many@example.com" },
+        headers: auth_headers_for(@coach)
+    end
+
+    assert_response :payment_required
+    assert_equal "client_limit_reached", response.parsed_body["code"]
+  end
+
+  test "renewing an already-pending invitation is not blocked at the limit" do
+    # 2 fixture clients + this 1 pending invitation already reach the free
+    # limit of 3 — renewing it must not double-count that same slot.
+    invitation = ClientInvitation.create!(coach: @coach, email: "already-pending@example.com")
+    old_digest = invitation.token_digest
+
+    post "/api/v1/coach/client_invitations",
+      params: { email: invitation.email },
+      headers: auth_headers_for(@coach)
+
+    assert_response :created
+    assert_not_equal old_digest, invitation.reload.token_digest
+  end
+
+  test "create is not blocked once subscribed above the free limit" do
+    User.create!(name: "Third Client", email: "third@example.com", role: :client, coach: @coach)
+    CoachSubscription.create!(user: @coach, plan_key: "pro", expires_at: 1.day.from_now)
+
+    assert_difference "ClientInvitation.count", 1 do
+      post "/api/v1/coach/client_invitations",
+        params: { email: "now-it-fits@example.com" },
+        headers: auth_headers_for(@coach)
+    end
+
+    assert_response :created
+  end
+
   test "client role cannot manage invitations" do
     get "/api/v1/coach/client_invitations", headers: auth_headers_for(@client)
 

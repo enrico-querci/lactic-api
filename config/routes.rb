@@ -9,6 +9,11 @@ Rails.application.routes.draw do
       delete "auth",         to: "auth#destroy"
       post   "auth/refresh", to: "auth#refresh"
 
+      # RevenueCat calls this directly — no user session exists yet, so it
+      # is authenticated by its own signature/shared-secret check rather
+      # than a JWT. See Api::V1::Webhooks::RevenueCatController.
+      post "webhooks/revenuecat", to: "webhooks/revenue_cat#create"
+
       resources :client_invitations, only: :show, param: :token do
         post :accept, on: :member
       end
@@ -62,6 +67,13 @@ Rails.application.routes.draw do
         end
 
         resources :program_assignments, only: %i[index show create update destroy]
+
+        # Singular `resource` would default to a plural controller name;
+        # this is a singleton (there is exactly one "my subscription"), so
+        # point it at the singular one. Mirrors exercise_taxonomy/account.
+        resource :subscription, only: %i[show], controller: "subscription" do
+          post :sync, on: :member
+        end
       end
 
       # Client endpoints
