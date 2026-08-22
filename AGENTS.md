@@ -33,15 +33,24 @@ primary source of revenue; weigh coach-side work accordingly when prioritizing.
 
 ### 1.1 Current milestone
 
-The latest completed milestone is secure client invitation onboarding:
+The latest completed milestone is Lactic Studio subscription billing via RevenueCat:
 
-- Coaches can create, list, resend, and revoke invitations from the web client.
-- Resend delivers invitations from the verified `yellowtulip.it` domain.
-- Invitation links open the web route `/invite/[token]`.
-- Invited users authenticate with Google or Apple; the verified provider email
-  must match the invitation email.
-- The backend, not the browser, determines whether a new account is a coach or
-  client.
+- Coach signup is open — any Google or Apple identity becomes a coach on
+  first sign-in, starting on a free plan capped at 3 clients.
+- Four paid tiers (Pro, Pro+, Unlimited, and an unlisted Founding offer) raise
+  or remove that cap. Billing runs through RevenueCat's Web Billing product;
+  a coach subscribes through an SDK-embedded checkout on `/coach/billing`,
+  not a redirect to an external page.
+- A RevenueCat webhook keeps each coach's stored plan in sync, but access
+  always re-derives from the plan's own expiry rather than a stored status —
+  a missed or delayed webhook self-heals instead of granting access forever.
+- A lapsed subscription drops a coach to the free plan's limit but never
+  touches their existing clients' programs or history — only new client
+  invitations are blocked until the coach is back under the cap or
+  resubscribes.
+- `COACH_EMAILS` no longer gates account creation (see §2.3). It is now an
+  unlimited comp list: a listed email is never capped regardless of billing
+  state, independent of whatever RevenueCat reports.
 - Both backend and frontend changes are merged, deployed, and online.
 
 ---
@@ -81,8 +90,14 @@ The latest completed milestone is secure client invitation onboarding:
 - A user has exactly one role: `coach` or `client`.
 - Existing users sign in normally using their linked provider identity.
 - An unknown client must present a valid invitation token during social sign-in.
-- An unknown coach can be created only when the verified email is listed in the
-  server-side `COACH_EMAILS` allowlist.
+- Coach signup is open: an unrecognized email with no pending client
+  invitation becomes a coach automatically, on the free plan. The one guard
+  is that an email with a pending, unexpired client invitation cannot become
+  a coach by signing in outside that invitation's link — the client must
+  accept it properly instead.
+- `COACH_EMAILS` no longer gates coach account creation. It is now a
+  billing-independent comp list — a listed email always has an unlimited
+  client cap, regardless of subscription state (see §3.2).
 - Never trust a role supplied by a browser or mobile client when creating an
   account.
 - Invitation acceptance requires the normalized social-provider email to equal
@@ -129,6 +144,23 @@ The latest completed milestone is secure client invitation onboarding:
   `FRONTEND_URL`, and `COACH_EMAILS`.
 - Never write secret values in source, documentation, logs, issues, or commits.
   Document variable names only.
+
+#### Billing
+
+- Provider: RevenueCat, Web Billing product (Stripe underneath — this app is
+  the merchant of record, not RevenueCat; VAT/tax handling is a business
+  decision outside this codebase, not something the code assumes).
+- Railway variables: `REVENUECAT_SECRET_API_KEY` (must be a **v2** API key —
+  v1 keys do not work against the v2 endpoints this app calls),
+  `REVENUECAT_PROJECT_ID`, `REVENUECAT_WEBHOOK_SIGNING_SECRET`.
+- Vercel variable: `NEXT_PUBLIC_REVENUECAT_WEB_BILLING_KEY` — RevenueCat's
+  **public** Web Billing key, safe to expose client-side; a different key
+  from the backend's secret one.
+- Optional everywhere: `Billing::RevenueCat::Client#configured?` gates every
+  call, matching the presence-gated pattern used for Resend and Sentry —
+  every coach simply reads as Free without it configured.
+- Never write secret values in source, documentation, logs, issues, or
+  commits. Document variable names only.
 
 #### Error tracking
 
@@ -192,15 +224,38 @@ WorkoutSession
 #### User / Coach
 
 - `id`, `name`, `email`, `avatar_url`, `role`, provider identity fields.
-- Has many clients, invitations, programs, exercises, templates, and
-  assignments as appropriate.
-- First-time coach access is controlled by `COACH_EMAILS`.
+- Has many clients, invitations, programs, exercises, templates,
+  assignments, and at most one `CoachSubscription` as appropriate.
+- Coach signup is open (§2.3); `COACH_EMAILS` now only comps a listed email
+  to an unlimited client cap, independent of billing state.
+- `client_limit`/`client_slots_used`/`can_invite_client?` derive the coach's
+  effective cap: the comp list wins if listed, otherwise the active
+  `CoachSubscription`'s limit, otherwise the free plan's limit of 3.
 
 #### User / Client
 
 - `id`, `name`, `email`, `avatar_url`, `role`, `coach_id`.
 - Belongs to a coach after accepting an invitation.
 - Has many program assignments and workout sessions.
+
+#### CoachSubscription
+
+- `id`, `user_id` (unique — at most one row per coach), `plan_key`
+  (`free`/`pro`/`pro_plus`/`unlimited`/`founding`), `entitlement_id`,
+  `expires_at`, `auto_renew`, `billing_issue_at`.
+- No row means Free. `active?` is derived from `expires_at` rather than a
+  stored status, so a subscription that RevenueCat never told this app had
+  lapsed still stops granting access on its own once the period ends.
+- Written only by `Billing::SyncSubscription`, which always re-fetches from
+  RevenueCat rather than trusting a webhook payload's contents — webhook
+  delivery is at-least-once with no ordering guarantee.
+
+#### RevenueCatWebhookEvent
+
+- `id`, `event_id` (unique), `event_type`, `app_user_id`, `environment`,
+  `payload`, `processed_at`.
+- Idempotency ledger and audit trail for `POST /api/v1/webhooks/revenuecat`;
+  the same `event_id` delivered more than once is only ever applied once.
 
 #### ClientInvitation
 
@@ -302,6 +357,7 @@ WorkoutSession
 | Assign programs | Assign a program with start date and notes |
 | Review progress | Inspect sessions, actual weights, and repetitions |
 | Planning metrics | Volume sets and estimated workout duration |
+| Billing | View current plan and usage; subscribe or upgrade via RevenueCat |
 
 ### 4.3 Implemented web portal
 
@@ -316,6 +372,8 @@ The Next.js application already contains both role-specific views.
 - `/coach/exercises/**`: exercise catalog and custom exercise creation.
 - `/coach/templates`: workout templates.
 - `/coach/assignments/**`: program assignments.
+- `/coach/billing`: current plan, usage, and subscribing/upgrading via
+  RevenueCat Web Billing.
 
 #### Client routes and capabilities
 
@@ -374,10 +432,38 @@ The Next.js application already contains both role-specific views.
 
 ### 5.4 First-time coach onboarding
 
-1. Add the normalized email to the Railway `COACH_EMAILS` variable.
-2. User signs in through Google or Apple.
-3. API verifies provider identity and the server-side allowlist.
-4. API creates a `coach` user. No browser-supplied role is consulted.
+1. User signs in through Google or Apple, with no invitation token.
+2. API verifies provider identity; unless that email has a pending, unexpired
+   client invitation, it creates a `coach` user. No browser-supplied role is
+   consulted.
+3. The new coach starts on the free plan (3 clients) with no
+   `CoachSubscription` row.
+4. The coach can subscribe from `/coach/billing` at any time (§5.5), or an
+   operator can add their email to `COACH_EMAILS` to comp them an unlimited
+   cap regardless of billing state.
+
+### 5.5 Coach subscribes to a paid plan
+
+1. Coach opens `/coach/billing`; the web app fetches
+   `GET /api/v1/coach/subscription` for their current plan and usage, and
+   `purchases.getOfferings()` (RevenueCat Web Billing SDK) for the plan cards.
+2. Coach picks a plan; `purchases.purchase()` renders an embedded checkout in
+   the page — not a redirect — and resolves once payment completes.
+3. Web app calls `POST /api/v1/coach/subscription/sync`, which fetches the
+   coach's entitlements from RevenueCat directly and upserts
+   `CoachSubscription`, so the new limit applies immediately rather than
+   waiting on webhook delivery.
+4. RevenueCat also calls `POST /api/v1/webhooks/revenuecat` (signature- or
+   shared-secret-verified, no JWT) for every lifecycle event thereafter —
+   renewal, cancellation, billing issue, expiration. The handler re-fetches
+   from RevenueCat rather than trusting the event payload, and is idempotent
+   per `event_id`.
+5. If a subscription lapses, the coach's `CoachSubscription` naturally reads
+   as inactive once `expires_at` passes — no explicit cancellation webhook is
+   required for access to stop. Existing clients and their data are
+   unaffected; only new client invitations are blocked
+   (`Api::V1::Coach::ClientInvitationsController` returns 402) until the
+   coach is back under their plan's limit or resubscribes.
 
 ---
 
@@ -469,6 +555,9 @@ npm run build
 | 10 | Secure invitation required for unknown clients | Establishes coach ownership and verified identity before onboarding |
 | 11 | Resend over HTTPS | Railway hobby deployments may restrict SMTP; HTTPS delivery is reliable |
 | 12 | Railway for Rails/PostgreSQL and Vercel for Next.js | Fits each runtime's strengths and preserves simple Git-based deployment |
+| 13 | Open coach signup, gated by a paid plan's client limit rather than an allowlist | Removes the manual step from customer acquisition; `COACH_EMAILS` is repurposed as an unlimited comp list instead of deleted, so existing comped access keeps working |
+| 14 | RevenueCat Web Billing for subscriptions | Web-only today with a native iOS app as a future target; RevenueCat unifies entitlements across both under one App User ID (the coach's own `User#id`) without committing to Apple In-App Purchase before that app exists |
+| 15 | Subscription state always re-derived from `expires_at`, never a stored status | Self-heals if a webhook is missed, delayed, or arrives out of order — RevenueCat's own delivery guarantee is at-least-once with no ordering guarantee |
 
 ---
 
@@ -484,6 +573,14 @@ npm run build
 - Photo/video object storage and upload pipeline.
 - Apple Sign-In UI in the web portal.
 - Optional email/password authentication only if product requirements change.
+- In-App Purchase for the native iOS Lactic Studio app once it exists.
+  RevenueCat already unifies entitlements across web and app-store purchases
+  under one App User ID, but Apple guideline 3.1.3(b) only permits honoring a
+  web purchase inside an app if the same subscription is *also* sold via IAP
+  in that app — a login-only iOS client selling nothing itself is not a safe
+  assumption (a near-identical B2B coaching app was rejected under 3.1.1
+  citing this exact confusion). Decide the IAP question before that app ships,
+  not after.
 
 ---
 
@@ -501,6 +598,11 @@ npm run build
 - Preserve the invitation security invariants: hashed token, expiry,
   revocation, single use, social-email match, coach ownership, and
   server-controlled role assignment.
+- Preserve the billing invariants: the RevenueCat webhook is
+  signature-verified and idempotent per `event_id`; stored subscription
+  state is always re-fetched from RevenueCat rather than trusted from a
+  webhook payload; access is derived from `expires_at`, never a stored
+  status, so it self-heals if a webhook is ever missed.
 - Prefer the simplest v1 implementation and briefly note meaningful
   alternatives.
 - Ask before proceeding only when an ambiguity materially changes the product,

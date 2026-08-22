@@ -57,25 +57,46 @@ class Auth::AuthenticateTest < ActiveSupport::TestCase
     end
   end
 
-  test "requires an invitation for an unknown client" do
-    stub_google_verifier(email: "unknown@example.com", name: "Unknown", provider_uid: "unknown_uid", avatar_url: nil) do
-      error = assert_raises(Auth::VerificationError) do
-        Auth::Authenticate.call(provider: "google", id_token: "fake_token")
-      end
+  test "an unrecognized email with no invitation becomes a coach" do
+    stub_google_verifier(email: "brandnew@example.com", name: "Brand New", provider_uid: "brand_new_uid", avatar_url: nil) do
+      result = Auth::Authenticate.call(provider: "google", id_token: "fake_token")
 
-      assert_equal "An invitation is required to create a client account", error.message
+      assert result[:user].coach?
     end
   end
 
-  test "creates an allowlisted coach without trusting a client role parameter" do
-    identity = { email: "coach@example.com", name: "New Coach", provider_uid: "coach_uid", avatar_url: nil }
+  test "coach signup does not depend on the COACH_EMAILS allowlist" do
+    identity = { email: "notlisted@example.com", name: "Not Listed", provider_uid: "not_listed_uid", avatar_url: nil }
 
-    stub_coach_access(allowed: true) do
+    stub_coach_access(allowed: false) do
       stub_google_verifier(**identity) do
         result = Auth::Authenticate.call(provider: "google", id_token: "fake_token")
 
         assert result[:user].coach?
       end
+    end
+  end
+
+  test "an invited client who signs in without their invitation link is not silently made a coach" do
+    ClientInvitation.create!(coach: users(:coach_john), email: "waiting-client@example.com")
+
+    stub_google_verifier(email: "waiting-client@example.com", name: "Waiting Client", provider_uid: "waiting_uid", avatar_url: nil) do
+      error = assert_raises(Auth::VerificationError) do
+        Auth::Authenticate.call(provider: "google", id_token: "fake_token")
+      end
+
+      assert_equal "Open your invitation link to join your coach", error.message
+    end
+  end
+
+  test "an expired pending invitation does not block becoming a coach" do
+    ClientInvitation.create!(coach: users(:coach_john), email: "expired-invite@example.com")
+                    .update_column(:expires_at, 1.day.ago)
+
+    stub_google_verifier(email: "expired-invite@example.com", name: "Expired Invite", provider_uid: "expired_uid", avatar_url: nil) do
+      result = Auth::Authenticate.call(provider: "google", id_token: "fake_token")
+
+      assert result[:user].coach?
     end
   end
 

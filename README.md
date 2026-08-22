@@ -8,8 +8,19 @@ New clients join through an email invitation and then verify their identity
 with Google or Apple. There is no password signup. Existing accounts can sign
 in normally; an unknown client email must present a valid invitation token.
 
-First-time coach accounts are controlled by a server-side email allowlist. The
-frontend cannot select or promote its own role.
+Coach signup is open: any Google or Apple identity with no pending client
+invitation becomes a coach automatically, on the free plan (see "Billing"
+below). The frontend cannot select or promote its own role either way.
+
+## Billing
+
+Lactic Studio subscriptions run through RevenueCat's Web Billing product
+(Stripe underneath — this app is the merchant of record). A coach's client
+limit comes from `User#client_limit`: the `COACH_EMAILS` allowlist grants an
+unlimited comp regardless of billing state; otherwise it's the active
+`CoachSubscription`'s limit, or the free plan's limit of 3 with no
+subscription row at all. See `app/services/billing/` and `AGENTS.md` §5.5 for
+the full purchase → webhook → sync flow.
 
 ### Production environment
 
