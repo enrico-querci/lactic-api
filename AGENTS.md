@@ -181,17 +181,17 @@ The latest completed milestone is Lactic Studio subscription billing via Revenue
 
 ### 2.5 Last verified production state
 
-Verified on **2026-08-04**:
+Verified on **2026-08-24**:
 
 | Component | Source commit | Deployment | Result |
 | --- | --- | --- | --- |
-| API | `5236941c98abf53a50f36033fc0f3aed4685705b` | Railway `5e04defe-b90d-4fbc-a7b3-067105b4eb8e` | `SUCCESS`; `/up` returned HTTP 200 |
-| Web | `e7848ad6e9251e96ff351eea1e364204297e042d` | Vercel `dpl_2vNuhEJaa5tzX1myWLtQTbXL93Pm` | `READY`; production alias verified |
+| API | `e9baae8700d789e745d3f0a43ec2f6e743ad8f7e` | Railway `07541263-8c12-42ec-bb7d-29307aa96e98` | `SUCCESS`; `/up` returned HTTP 200 |
+| Web | `1a0d1a59242e7de830c7f3b8aa7011f5bd618fc0` | Vercel `dpl_2tqmoPBJKsMTcVqaUxVru5VyNEe7` | `READY`; production alias verified |
 
 Merged pull requests:
 
-- API: `enrico-querci/lactic-api#20`
-- Web: `enrico-querci/lactic-web#1`
+- API: `enrico-querci/lactic-api#45`
+- Web: `enrico-querci/lactic-web#25`
 
 ---
 
