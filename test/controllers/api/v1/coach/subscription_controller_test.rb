@@ -39,7 +39,9 @@ class Api::V1::Coach::SubscriptionControllerTest < ActionDispatch::IntegrationTe
   test "sync fetches from RevenueCat and persists the result" do
     original = Billing::RevenueCat::Client.instance_method(:entitlements)
     Billing::RevenueCat::Client.define_method(:entitlements) do |_app_user_id|
-      [ { entitlement_id: "studio_pro_plus", gives_access: true, expires_at: "2026-09-01T00:00:00Z" } ]
+      # Relative so this cannot expire into a false failure; see the note in
+      # test/services/billing/sync_subscription_test.rb.
+      [ { entitlement_id: "studio_pro_plus", gives_access: true, expires_at: 1.year.from_now.iso8601 } ]
     end
 
     post sync_api_v1_coach_subscription_path, headers: auth_headers_for(@coach)
