@@ -33,10 +33,17 @@ module Api
         def history
           exercise = Exercise.for_coach(current_user.coach_id).find(params[:id])
 
+          # `reorder`, not `order`: SetLog includes Positionable, whose
+          # `default_scope { order(position: :asc) }` is applied FIRST and would
+          # otherwise win. `order` only appends, producing
+          #   ORDER BY set_logs.position ASC, workout_sessions.started_at DESC, ...
+          # which sorts by set number and interleaves every session together —
+          # so "most recent first" silently did nothing and the client's
+          # exercise history read as a jumble across dates.
           set_logs = SetLog.joins(exercise_log: { workout_session: {}, workout_exercise: {} })
                           .where(workout_sessions: { client_id: current_user.id })
                           .where(workout_exercises: { exercise_id: exercise.id })
-                          .order("workout_sessions.started_at DESC, set_logs.position ASC")
+                          .reorder("workout_sessions.started_at DESC, set_logs.position ASC")
 
           render json: SetLogBlueprint.render(set_logs)
         end
