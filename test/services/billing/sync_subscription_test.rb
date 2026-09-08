@@ -7,7 +7,11 @@ module Billing
       def entitlements(_app_user_id) = @entitlements
     end
 
-    def entitlement(id, gives_access: true, expires_at: "2026-09-01T00:00:00Z")
+    # Relative, not absolute. Access is derived from expires_at rather than a
+    # stored status (AGENTS.md ADR 15), so a hardcoded date silently turns every
+    # "active subscription" assertion here into an expired one the moment it
+    # passes — which is exactly what happened to the original 2026-09-01.
+    def entitlement(id, gives_access: true, expires_at: 1.year.from_now.iso8601)
       { entitlement_id: id, gives_access: gives_access, expires_at: expires_at }
     end
 
