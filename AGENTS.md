@@ -18,7 +18,7 @@ is a workout-management ecosystem for coaches and their clients.
 
 | Product | Audience | Platform | Purpose | Current state |
 | --- | --- | --- | --- | --- |
-| **Lactic** | Client | iOS | Follow assigned programs and log workouts | In development in `lactic-ios`; see `docs/ios-plan.md` |
+| **Lactic** | Client | iOS | Follow assigned programs and log workouts | Core flows implemented; visual redesign landed through `lactic-ios#1`-`#4`; see `docs/ios-plan.md` |
 | **Lactic Studio** | Coach/Admin | Web today; iOS/iPadOS planned | Manage clients and create training programs | Coach routes (`/coach/**`) in Lactic Web are implemented and deployed; a native app is a product target |
 | **Lactic Web** | Coach and client | Web | Browser access to both role-specific experiences | Implemented and deployed |
 | **Lactic API** | All clients | Rails API | Shared auth, business logic, persistence, email, and REST API | Implemented and deployed |
@@ -52,6 +52,48 @@ The latest completed milestone is Lactic Studio subscription billing via Revenue
   unlimited comp list: a listed email is never capped regardless of billing
   state, independent of whatever RevenueCat reports.
 - Both backend and frontend changes are merged, deployed, and online.
+
+### 1.2 Current iOS milestone
+
+As of **2026-09-09**, the Lactic client has completed and merged four visual
+implementation increments, landed in order:
+
+1. `lactic-ios#1` (`codex/lactic-visual-foundation` onto `main`) establishes
+   the shared chalk/graphite/electric-lime palette, system-font hierarchy,
+   reusable controls and states, sign-in treatment, contrast tests, and the
+   initial Lactic Studio brand scaffold.
+2. `lactic-ios#2` (`codex/workout-execution-design` onto `#1`) turns workout
+   execution into the primary training surface: overview hierarchy, exercise
+   cards, logged and extra-set controls, notes, previous-performance context,
+   rest timer, screen-awake behavior, and local rest alerts. Notification
+   cleanup uses the async API so the warnings-as-errors Release build passes.
+3. `lactic-ios#3` (`codex/home-dashboard-design` onto `#2`) turns Home into an
+   action-first dashboard: the newest unfinished session is resumable directly,
+   otherwise the next workout can be started directly; programme progress,
+   coach guidance, prescription counts, completed-session history, pull to
+   refresh, and a branded empty state follow beneath it.
+4. `lactic-ios#4` (`codex/programme-browsing-design` onto `#3`) redesigns active
+   programme browsing and plan detail with assignment context, coach guidance,
+   week/workout hierarchy, volume summaries, and session-derived upcoming,
+   in-progress, and completed states. Synthetic DEBUG fixtures cover both the
+   list and detail without authentication or live API data.
+
+All four PRs have passing GitHub lint/test checks. The client and Studio Debug
+schemes, the Lactic Release configuration, and all three package suites pass
+locally. Home, workout, and programme fixtures have been visually checked in
+light and dark appearances and at accessibility Dynamic Type sizes. DEBUG-only
+synthetic routes (`--workout-design-preview`, optional
+`--workout-design-timer`; `--home-design-preview`, optional `--home-resume`;
+and `--programme-design-preview`, optional `--programme-list`) keep that review
+independent of authentication and live API data.
+
+The next client visual sequence is history and session/exercise progress, then
+Settings and remaining onboarding/account states. The native Lactic Studio
+target is still a branded placeholder and is a larger product milestone after
+the client surfaces. Automated device taps were not available during the visual
+pass, so workout logging/deletion and dashboard/programme navigation still need
+hands-on interaction verification even though their models, builds, and
+screenshot states pass.
 
 ---
 
