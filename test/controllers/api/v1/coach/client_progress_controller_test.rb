@@ -12,7 +12,9 @@ class Api::V1::Coach::ClientProgressControllerTest < ActionDispatch::Integration
     get "/api/v1/coach/clients/#{@client.id}/progress", headers: auth_headers_for(@coach)
     assert_response :ok
     json = JSON.parse(response.body)
-    assert json.any? { |s| s["id"] == @session.id }
+    session = json.find { |item| item["id"] == @session.id }
+    assert session
+    assert_equal @session.workout.name, session["workout_name"]
   end
 
   test "index returns 404 for non-owned client" do
@@ -32,6 +34,10 @@ class Api::V1::Coach::ClientProgressControllerTest < ActionDispatch::Integration
     assert_response :ok
     json = JSON.parse(response.body)
     assert json.key?("exercise_logs")
+    log = json.fetch("exercise_logs").first
+    assert log["exercise_id"]
+    assert log["exercise_name"]
+    assert log["position"]
   end
 
   test "show returns 404 for session not belonging to client" do
