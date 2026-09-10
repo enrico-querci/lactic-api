@@ -14,7 +14,9 @@ class Api::V1::Client::WorkoutSessionsControllerTest < ActionDispatch::Integrati
     get "/api/v1/client/workout_sessions", headers: auth_headers_for(@client)
     assert_response :ok
     json = JSON.parse(response.body)
-    assert json.any? { |s| s["id"] == @session.id }
+    session = json.find { |item| item["id"] == @session.id }
+    assert session
+    assert_equal @workout.name, session["workout_name"]
   end
 
   test "index returns 403 for coach" do
@@ -28,6 +30,10 @@ class Api::V1::Client::WorkoutSessionsControllerTest < ActionDispatch::Integrati
     assert_response :ok
     json = JSON.parse(response.body)
     assert json.key?("exercise_logs")
+    log = json.fetch("exercise_logs").first
+    assert_equal exercises(:bench_press).id, log["exercise_id"]
+    assert_equal exercises(:bench_press).name, log["exercise_name"]
+    assert_equal "A", log["position"]
   end
 
   test "show returns 404 for other client's session" do

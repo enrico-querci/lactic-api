@@ -78,9 +78,14 @@ class Api::V1::Client::ExercisesControllerTest < ActionDispatch::IntegrationTest
 
     get "/api/v1/client/exercises/#{@bench.id}/history", headers: auth_headers_for(@client)
     assert_response :ok
-    ids = JSON.parse(response.body).map { |s| s["id"] }
+    history = JSON.parse(response.body)
+    ids = history.map { |set| set["id"] }
 
     assert_equal [ recent_first.id, recent_second.id, older_first.id, older_second.id ], ids,
                  "expected both sets of the newest session before either set of the older one"
+    assert_equal recent_session.id, history.first["workout_session_id"]
+    assert_equal recent_session.completed_at.iso8601(3), history.first["performed_at"]
+    assert_equal older.id, history.last["workout_session_id"]
+    assert_equal older.started_at.iso8601(3), history.last["performed_at"]
   end
 end

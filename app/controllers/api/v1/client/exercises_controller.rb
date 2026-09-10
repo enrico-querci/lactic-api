@@ -41,11 +41,12 @@ module Api
           # so "most recent first" silently did nothing and the client's
           # exercise history read as a jumble across dates.
           set_logs = SetLog.joins(exercise_log: { workout_session: {}, workout_exercise: {} })
+                          .includes(exercise_log: :workout_session)
                           .where(workout_sessions: { client_id: current_user.id })
                           .where(workout_exercises: { exercise_id: exercise.id })
                           .reorder("workout_sessions.started_at DESC, set_logs.position ASC")
 
-          render json: SetLogBlueprint.render(set_logs)
+          render json: SetLogBlueprint.render(set_logs, view: :history)
         end
 
         private
