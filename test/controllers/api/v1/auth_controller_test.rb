@@ -43,7 +43,7 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :ok
     assert_equal({ provider: "apple", id_token: "tok", invitation_token: nil, name: "Jo Coach",
-                   authorization_code: "code-1" }, received)
+                   authorization_code: "code-1", app: nil }, received)
   ensure
     Auth::Authenticate.define_singleton_method(:call, original)
   end

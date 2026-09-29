@@ -10,7 +10,8 @@ module Api
           id_token: params[:id_token],
           invitation_token: params[:invitation_token],
           name: params[:name],
-          authorization_code: params[:authorization_code]
+          authorization_code: params[:authorization_code],
+          app: params[:app]
         )
         render json: {
           access_token: result[:access_token],

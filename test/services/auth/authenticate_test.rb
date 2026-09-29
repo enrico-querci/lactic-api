@@ -175,6 +175,72 @@ class Auth::AuthenticateTest < ActiveSupport::TestCase
     assert_nil invitation.reload.accepted_at
   end
 
+  # === App-scoped sign-in ===
+
+  test "a coach cannot sign in to the client app" do
+    coach = users(:coach_john)
+
+    stub_google_verifier(email: coach.email, name: coach.name, provider_uid: "g_john", avatar_url: nil) do
+      error = assert_raises(Auth::VerificationError) do
+        Auth::Authenticate.call(provider: "google", id_token: "fake_token", app: "lactic")
+      end
+      assert_match "coach account", error.message
+    end
+    # Refused before linking, so the identity was never attached.
+    assert_nil coach.reload.provider_uid
+  end
+
+  test "a client cannot sign in to Lactic Studio" do
+    client = users(:client_alice)
+    client.update!(provider: "apple", provider_uid: "apple_alice")
+
+    stub_apple_verifier(email: client.email, name: "alice", provider_uid: "apple_alice", client_id: "com.enricoquerci.lacticstudio") do
+      error = assert_raises(Auth::VerificationError) do
+        Auth::Authenticate.call(provider: "apple", id_token: "fake_token", app: "studio")
+      end
+      assert_match "client account", error.message
+    end
+  end
+
+  test "an unknown email without an invitation gets no account from the client app" do
+    stub_google_verifier(email: "stranger@example.com", name: "Stranger", provider_uid: "g_stranger", avatar_url: nil) do
+      assert_no_difference "User.count" do
+        error = assert_raises(Auth::VerificationError) do
+          Auth::Authenticate.call(provider: "google", id_token: "fake_token", app: "lactic")
+        end
+        assert_match "invitation link", error.message
+      end
+    end
+  end
+
+  test "an invited client signs up through the client app" do
+    invitation = ClientInvitation.create!(coach: users(:coach_john), email: "invited-app@example.com")
+
+    stub_google_verifier(email: "invited-app@example.com", name: "Invited", provider_uid: "g_inv", avatar_url: nil) do
+      result = Auth::Authenticate.call(provider: "google", id_token: "fake_token",
+                                       invitation_token: invitation.raw_token, app: "lactic")
+      assert result[:user].client?
+    end
+  end
+
+  test "a new coach signs up through Lactic Studio, and an existing one signs in" do
+    stub_google_verifier(email: "newcoach@example.com", name: "New Coach", provider_uid: "g_new", avatar_url: nil) do
+      assert Auth::Authenticate.call(provider: "google", id_token: "fake_token", app: "studio")[:user].coach?
+    end
+    coach = users(:coach_john)
+    stub_google_verifier(email: coach.email, name: coach.name, provider_uid: "g_john2", avatar_url: nil) do
+      assert_equal coach, Auth::Authenticate.call(provider: "google", id_token: "fake_token", app: "studio")[:user]
+    end
+  end
+
+  test "an unknown app is refused rather than ignored" do
+    stub_google_verifier(email: "x@example.com", name: "X", provider_uid: "g_x", avatar_url: nil) do
+      assert_raises(Auth::VerificationError) do
+        Auth::Authenticate.call(provider: "google", id_token: "fake_token", app: "admin")
+      end
+    end
+  end
+
   test "generates both access and refresh tokens" do
     invitation = ClientInvitation.create!(coach: users(:coach_john), email: "fresh@example.com")
 
