@@ -41,6 +41,9 @@ Rails.application.routes.draw do
           post :resend, action: :resend_invitation, on: :member
         end
 
+        # Singleton, like the client's: there is exactly one "my account".
+        resource :account, only: %i[destroy], controller: "account"
+
         resources :clients, only: %i[index show destroy] do
           resources :progress, only: %i[index show], controller: "client_progress"
         end
