@@ -8,7 +8,9 @@ module Api
         result = Auth::Authenticate.call(
           provider: params[:provider],
           id_token: params[:id_token],
-          invitation_token: params[:invitation_token]
+          invitation_token: params[:invitation_token],
+          name: params[:name],
+          authorization_code: params[:authorization_code]
         )
         render json: {
           access_token: result[:access_token],

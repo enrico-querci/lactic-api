@@ -100,6 +100,81 @@ class Auth::AuthenticateTest < ActiveSupport::TestCase
     end
   end
 
+  # === Sign in with Apple ===
+
+  test "a new Apple user gets the name Apple gave the app, not one derived from the email" do
+    identity = { email: "jo@example.com", name: "jo", provider_uid: "apple_jo", client_id: "com.enricoquerci.lacticstudio" }
+
+    stub_apple_verifier(**identity) do
+      result = Auth::Authenticate.call(provider: "apple", id_token: "fake_token", name: "  Jo   Coach ")
+
+      assert_equal "Jo Coach", result[:user].name
+      assert result[:user].coach?
+    end
+  end
+
+  test "a forwarded name never renames an existing user" do
+    user = users(:client_alice)
+    user.update!(provider: "apple", provider_uid: "apple_alice")
+
+    stub_apple_verifier(email: user.email, name: "alice", provider_uid: "apple_alice", client_id: "com.enricoquerci.lactic") do
+      Auth::Authenticate.call(provider: "apple", id_token: "fake_token", name: "Someone Else")
+    end
+
+    assert_equal "Alice Client", user.reload.name
+  end
+
+  test "a forwarded name is ignored for Google, whose token is the authority" do
+    stub_google_verifier(email: "g@example.com", name: "Verified Name", provider_uid: "g_uid", avatar_url: nil) do
+      result = Auth::Authenticate.call(provider: "google", id_token: "fake_token", name: "Forged Name")
+
+      assert_equal "Verified Name", result[:user].name
+    end
+  end
+
+  test "an Apple sign-in hands its code and audience on for revocation later" do
+    calls = []
+    identity = { email: "code@example.com", name: "code", provider_uid: "apple_code", client_id: "com.enricoquerci.lactic" }
+
+    stub_apple_verifier(**identity) do
+      stub_remember(calls) do
+        result = Auth::Authenticate.call(provider: "apple", id_token: "fake_token", authorization_code: "code-1")
+
+        assert_equal [ { user: result[:user], code: "code-1", client_id: "com.enricoquerci.lactic" } ], calls
+      end
+    end
+  end
+
+  test "a Google sign-in never talks to Apple" do
+    calls = []
+
+    stub_google_verifier(email: "nogoogle@example.com", name: "No Apple", provider_uid: "g2", avatar_url: nil) do
+      stub_remember(calls) do
+        Auth::Authenticate.call(provider: "google", id_token: "fake_token", authorization_code: "code-1")
+      end
+    end
+
+    assert_empty calls
+  end
+
+  test "a Hide My Email address is told how to share the real one, and nothing is created" do
+    invitation = ClientInvitation.create!(coach: users(:coach_john), email: "real-client@example.com")
+    identity = { email: "x7k2@privaterelay.appleid.com", name: "x7k2", provider_uid: "apple_relay",
+                 client_id: "com.enricoquerci.lactic" }
+
+    stub_apple_verifier(**identity) do
+      assert_no_difference "User.count" do
+        error = assert_raises(Auth::VerificationError) do
+          Auth::Authenticate.call(provider: "apple", id_token: "fake_token", invitation_token: invitation.raw_token)
+        end
+
+        assert_match "Hide My Email", error.message
+        assert_match "Share My Email", error.message
+      end
+    end
+    assert_nil invitation.reload.accepted_at
+  end
+
   test "generates both access and refresh tokens" do
     invitation = ClientInvitation.create!(coach: users(:coach_john), email: "fresh@example.com")
 
@@ -133,6 +208,14 @@ class Auth::AuthenticateTest < ActiveSupport::TestCase
     yield
   ensure
     CoachAccess.define_singleton_method(:allowed?, original)
+  end
+
+  def stub_remember(calls)
+    original = Auth::AppleAuthorization.method(:remember)
+    Auth::AppleAuthorization.define_singleton_method(:remember) { |**args| calls << args }
+    yield
+  ensure
+    Auth::AppleAuthorization.define_singleton_method(:remember, original)
   end
 
   def stub_verifier(klass, identity)

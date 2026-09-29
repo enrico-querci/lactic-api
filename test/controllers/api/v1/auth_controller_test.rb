@@ -24,6 +24,30 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_equal "User not found", json["error"]
   end
 
+  # === create ===
+
+  # The iOS apps send Apple's first-authorization name and its
+  # authorization code as top-level params beside the ID token.
+  test "create passes Apple's name and authorization code through" do
+    received = nil
+    user = users(:coach_john)
+    original = Auth::Authenticate.method(:call)
+    Auth::Authenticate.define_singleton_method(:call) do |**args|
+      received = args
+      { user: user, access_token: "a", refresh_token: "r" }
+    end
+
+    post api_v1_auth_path, params: {
+      provider: "apple", id_token: "tok", name: "Jo Coach", authorization_code: "code-1"
+    }, as: :json
+
+    assert_response :ok
+    assert_equal({ provider: "apple", id_token: "tok", invitation_token: nil, name: "Jo Coach",
+                   authorization_code: "code-1" }, received)
+  ensure
+    Auth::Authenticate.define_singleton_method(:call, original)
+  end
+
   # === refresh ===
 
   test "refresh returns new tokens for valid refresh token" do

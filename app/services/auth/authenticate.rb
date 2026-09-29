@@ -5,16 +5,30 @@ module Auth
       "google" => Auth::GoogleVerifier
     }.freeze
 
-    def self.call(provider:, id_token:, invitation_token: nil)
+    # `name` and `authorization_code` are Sign in with Apple only, and both
+    # come from the app rather than the verified token. Apple hands the app
+    # the user's name on first authorization and never again, and its token
+    # never carries one — so a forwarded name is the only real name an
+    # Apple account will ever have. It is used when creating a user and
+    # ignored otherwise. Google's verified token already names the user.
+    def self.call(provider:, id_token:, invitation_token: nil, name: nil, authorization_code: nil)
       verifier = PROVIDERS[provider]
       raise Auth::VerificationError, "Unsupported provider: #{provider}" unless verifier
 
       identity = verifier.verify(id_token)
+      if provider == "apple" && (forwarded_name = name.to_s.squish.presence)
+        identity = identity.merge(name: forwarded_name)
+      end
       invitation = find_invitation(invitation_token)
       user = User.transaction do
         authenticated_user = find_or_create_user(provider, identity, invitation)
         accept_invitation(invitation, authenticated_user) if invitation
         authenticated_user
+      end
+      # Outside the transaction: a call to Apple should never hold a lock,
+      # and its failure must not undo a successful sign-in.
+      if provider == "apple"
+        Auth::AppleAuthorization.remember(user: user, code: authorization_code, client_id: identity[:client_id])
       end
       tokens = generate_tokens(user)
 

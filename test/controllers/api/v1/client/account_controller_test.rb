@@ -37,6 +37,25 @@ class Api::V1::Client::AccountControllerTest < ActionDispatch::IntegrationTest
     assert RefreshToken.exists?(refresh_tokens(:expired_token).id) # bob's token
   end
 
+  # App Review guideline 5.1.1(v): deleting an account that used Sign in
+  # with Apple must revoke its token.
+  test "destroy revokes the Sign in with Apple token before deleting" do
+    @client.update!(apple_refresh_token: "r-1", apple_client_id: "com.enricoquerci.lactic")
+    revoked = []
+    original = Auth::AppleAuthorization.method(:revoke)
+    Auth::AppleAuthorization.define_singleton_method(:revoke) do |user|
+      revoked << [ user.id, user.apple_refresh_token, User.exists?(user.id) ]
+    end
+
+    delete "/api/v1/client/account", headers: auth_headers_for(@client)
+
+    assert_response :no_content
+    assert_equal [ [ @client.id, "r-1", true ] ], revoked
+    assert_not User.exists?(@client.id)
+  ensure
+    Auth::AppleAuthorization.define_singleton_method(:revoke, original)
+  end
+
   test "destroy returns 403 for coach role" do
     delete "/api/v1/client/account", headers: auth_headers_for(@coach)
     assert_response :forbidden

@@ -61,4 +61,19 @@ class ClientInvitations::AcceptTest < ActiveSupport::TestCase
       ClientInvitations::Accept.call(invitation: dotted_invitation, user: undotted_client)
     end
   end
+
+  # Apple's relay address can never match, and signing in again gives the
+  # same one, so the generic "sign in with <address>" would loop.
+  test "explains Hide My Email instead of asking for an address the client cannot produce" do
+    relay_client = User.create!(name: "Relay", email: "x7k2@privaterelay.appleid.com", role: :client)
+
+    error = assert_raises(ClientInvitations::Accept::AcceptanceError) do
+      ClientInvitations::Accept.call(invitation: @invitation, user: relay_client)
+    end
+
+    assert_match "Hide My Email", error.message
+    assert_match @invitation.email, error.message
+    assert_nil relay_client.reload.coach_id
+    assert_nil @invitation.reload.accepted_at
+  end
 end
