@@ -31,6 +31,9 @@ gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.1"
+# image_processing 2 no longer depends on a backend; Active Storage's default
+# variant processor is vips, so the binding is declared here.
+gem "ruby-vips", "~> 2.0"
 
 # Authentication
 gem "jwt", "~> 3.3"
