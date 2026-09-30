@@ -41,7 +41,7 @@ gem "apple_id", "~> 1.4"
 gem "google-id-token", "~> 1.4"
 
 # Transactional email over HTTPS (Railway blocks SMTP on lower-tier plans)
-gem "resend", "~> 1.6"
+gem "resend", "~> 1.17"
 
 # Serialization
 gem "blueprinter", "~> 1.1"
