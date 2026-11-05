@@ -65,8 +65,12 @@ Rails.application.routes.draw do
           resources :workout_exercises, only: %i[index create update destroy]
         end
 
-        resources :workout_templates, only: %i[index show create destroy] do
+        resources :workout_templates, only: %i[index show create update destroy] do
           post :apply, on: :member
+          # Same JSON shape and verbs as a workout's exercises, so the web's
+          # exercise editor serves both.
+          resources :workout_exercises, only: %i[index create update destroy],
+                                        controller: "workout_template_exercises"
         end
 
         resources :program_assignments, only: %i[index show create update destroy]

@@ -36,7 +36,43 @@ class Api::V1::Coach::WorkoutTemplatesControllerTest < ActionDispatch::Integrati
     assert_equal @template.name, json["name"]
   end
 
+  test "show includes the template's exercises in the workout exercise shape" do
+    get "/api/v1/coach/workout_templates/#{@template.id}", headers: auth_headers_for(@coach)
+    json = JSON.parse(response.body)
+
+    assert_equal %w[A B], json["workout_exercises"].map { |e| e["position"] }
+    bench = json["workout_exercises"].first
+    assert_equal [ 4, 10, 90, 2 ], bench.values_at("sets", "reps", "rest_seconds", "rir")
+    assert_equal exercises(:bench_press).id, bench["exercise"]["id"]
+  end
+
+  test "show returns 404 for a template that is not the coach's" do
+    other = WorkoutTemplate.create!(name: "Not mine", coach: users(:client_alice))
+    get "/api/v1/coach/workout_templates/#{other.id}", headers: auth_headers_for(@coach)
+    assert_response :not_found
+  end
+
   # POST create
+  test "create without a source workout makes an empty template" do
+    assert_difference "WorkoutTemplate.count", 1 do
+      post "/api/v1/coach/workout_templates",
+           params: { name: "Gambe Principiante" },
+           headers: auth_headers_for(@coach)
+    end
+    assert_response :created
+    json = JSON.parse(response.body)
+    assert_equal "Gambe Principiante", json["name"]
+    assert_equal 0, json["exercise_count"]
+    assert_nil json["source_workout_id"]
+  end
+
+  test "create without a name or source workout is rejected" do
+    assert_no_difference "WorkoutTemplate.count" do
+      post "/api/v1/coach/workout_templates", params: { name: "" }, headers: auth_headers_for(@coach)
+    end
+    assert_response :unprocessable_entity
+  end
+
   test "create saves a workout as template" do
     assert_difference "WorkoutTemplate.count", 1 do
       post "/api/v1/coach/workout_templates",
@@ -63,6 +99,30 @@ class Api::V1::Coach::WorkoutTemplatesControllerTest < ActionDispatch::Integrati
            headers: auth_headers_for(@coach)
     end
     assert_response :unprocessable_entity
+  end
+
+  # PATCH update
+  test "update renames a template" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { name: "Renamed" },
+          headers: auth_headers_for(@coach)
+    assert_response :ok
+    assert_equal "Renamed", @template.reload.name
+  end
+
+  test "update rejects a blank name" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { name: "" },
+          headers: auth_headers_for(@coach)
+    assert_response :unprocessable_entity
+    assert_equal "Chest Day Template", @template.reload.name
+  end
+
+  test "update returns 403 for client" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { name: "X" },
+          headers: auth_headers_for(@client)
+    assert_response :forbidden
   end
 
   # DELETE destroy

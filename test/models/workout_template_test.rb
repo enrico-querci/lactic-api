@@ -47,4 +47,21 @@ class WorkoutTemplateTest < ActiveSupport::TestCase
       workout_templates(:chest_template).destroy!
     end
   end
+
+  test "next_position is the first unused letter" do
+    template = workout_templates(:chest_template)
+    assert_equal "C", template.next_position
+
+    template.workout_template_exercises.find_by!(position: "A").destroy!
+    assert_equal "A", template.next_position
+  end
+
+  test "next_position is nil once every letter is used" do
+    template = WorkoutTemplate.create!(name: "Full", coach: users(:coach_john))
+    WorkoutTemplateExercise::POSITIONS.each do |position|
+      template.workout_template_exercises.create!(exercise: exercises(:squat), position: position, sets: 1, reps: 1)
+    end
+
+    assert_nil template.next_position
+  end
 end

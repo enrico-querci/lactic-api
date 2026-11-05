@@ -7,4 +7,10 @@ class WorkoutTemplate < ApplicationRecord
   has_many :workout_template_exercises, dependent: :destroy
 
   validates :name, presence: true
+
+  # The first unused position letter, which is how a new exercise is placed
+  # when the client does not choose one. Nil once all 26 are taken.
+  def next_position
+    (WorkoutTemplateExercise::POSITIONS - workout_template_exercises.pluck(:position)).first
+  end
 end
