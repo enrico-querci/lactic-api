@@ -5,6 +5,7 @@ class Exercise < ApplicationRecord
   belongs_to :coach, class_name: "User", optional: true
 
   has_many :workout_exercises, dependent: :destroy
+  has_many :workout_template_exercises, dependent: :destroy
 
   # `through:` associations let an exercise reach muscles and equipment via the
   # join tables, so `exercise.muscles` reads naturally while the join row still

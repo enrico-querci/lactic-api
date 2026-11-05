@@ -1,6 +1,10 @@
 class WorkoutTemplate < ApplicationRecord
   belongs_to :coach, class_name: "User"
-  belongs_to :source_workout, class_name: "Workout"
+  # Provenance only: the template owns a copy of the exercises, so the workout
+  # it was saved from can change or be deleted without touching it.
+  belongs_to :source_workout, class_name: "Workout", optional: true
+
+  has_many :workout_template_exercises, dependent: :destroy
 
   validates :name, presence: true
 end

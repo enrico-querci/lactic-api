@@ -27,13 +27,7 @@ module Api
           # Before the destroy, which takes the stored token with it. Never
           # blocks the deletion: see Auth::AppleAuthorization.
           Auth::AppleAuthorization.revoke(current_user)
-          User.transaction do
-            # Templates first: User destroys programs before templates, and a
-            # program's workouts would try to nullify the templates' NOT NULL
-            # source_workout_id on the way out.
-            current_user.workout_templates.destroy_all
-            current_user.destroy!
-          end
+          current_user.destroy!
           head :no_content
         end
       end
