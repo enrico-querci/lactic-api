@@ -354,15 +354,15 @@ Verified on **2026-11-05**:
 
 | Component | Source commit | Deployment | Result |
 | --- | --- | --- | --- |
-| API | `2b48bf071e64c523f7cbd53abfddab745777e186` | Railway `b1359b19-acc7-496a-a3b8-67ee4bb9079a` | `SUCCESS`; `/up` returned HTTP 200 |
-| Web | `4f3d1674012a1c2b85bf10b1cb364888a1abf474` | Vercel `dpl_8mfMADnw5Xk4yuK6zrxZ1iX5sRFW` | `READY`; `/` and `/login` returned HTTP 200 |
+| API | `992df3d7b49951321de54f6ced1c097675f3b901` | Railway `a0322b2f-f41f-4987-999d-00fd27916c51` | `SUCCESS`; `/up` returned HTTP 200 |
+| Web | `5ebb1be497c75f46c50db967a7a27bbf0429b23d` | Vercel `dpl_6yognBjZ7QFoQcFtpB1j5cc865uu` | `READY`; `/`, `/login`, `/coach/clients` and `/coach/templates` returned HTTP 200 |
 
 Both commits equal `origin/main` of their repository at verification time.
 
 Merged pull requests:
 
-- API: `enrico-querci/lactic-api#63`
-- Web: `enrico-querci/lactic-web#36`
+- API: `enrico-querci/lactic-api#79`
+- Web: `enrico-querci/lactic-web#42`
 
 ---
 
@@ -373,7 +373,11 @@ Merged pull requests:
 ```text
 Coach (User with role=coach)
  ├─ ClientInvitation
+ ├─ ClientProfile (the coach's record of a client; linked to the Client once they join)
  ├─ Client (User with role=client)
+ ├─ WorkoutTemplate (a reusable workout, with its own copy of the exercises)
+ │   └─ WorkoutTemplateExercise
+ │        └─ Exercise
  └─ Program (reusable template)
      └─ Week
          └─ Workout (day 1-7; multiple workouts per day allowed)
@@ -397,8 +401,9 @@ WorkoutSession
 - `id`, `name`, `email`, `avatar_url`, `role`, provider identity fields.
 - `apple_refresh_token` and `apple_client_id` (the bundle ID it was issued
   to), kept only so account deletion can revoke Sign in with Apple.
-- Has many clients, invitations, programs, exercises, templates,
-  assignments, and at most one `CoachSubscription` as appropriate.
+- Has many clients, client profiles, invitations, programs, exercises,
+  workout templates, assignments, and at most one `CoachSubscription` as
+  appropriate.
 - Coach signup is open (§2.3); `COACH_EMAILS` now only comps a listed email
   to an unlimited client cap, independent of billing state.
 - `client_limit`/`client_slots_used`/`can_invite_client?` derive the coach's
@@ -410,6 +415,7 @@ WorkoutSession
 - `id`, `name`, `email`, `avatar_url`, `role`, `coach_id`.
 - Belongs to a coach after accepting an invitation.
 - Has many program assignments and workout sessions.
+- Has one `ClientProfile`, kept by their coach; it is deleted with the account.
 
 #### CoachSubscription
 
@@ -440,6 +446,29 @@ WorkoutSession
 - Acceptance requires matching social identity, links the client to the coach,
   and records `accepted_at`.
 
+#### ClientProfile
+
+- `id`, `coach_id`, `user_id` (nullable, unique), `name` (required), `email`,
+  `phone`, `level` (`beginner`/`intermediate`/`advanced`), `goal`
+  (`strength`/`muscle_gain`/`fat_loss`/`health`/`other`), `limitations`
+  (injuries), `notes`. Only the name is required.
+- The coach's own record of a client, which can exist before the person does.
+  `user_id` is set when they accept an invitation. Status is derived, never
+  stored: `active` (linked), `invited` (an unexpired pending invitation for
+  its email) or `prepared`.
+- The email is unique per coach (case-insensitive) and fixed once the person
+  is invited or has joined, because it is how an invitation finds the profile.
+- Does not count against the client limit: it grants no access, and only an
+  invitation takes a slot (`client_slots_used` is unchanged).
+- Accepting an invitation links the prepared profile with the invited email, or
+  creates one from the account. Linking runs behind a savepoint and never
+  fails the acceptance.
+- Removing a client keeps the profile, back to prepared; deleting a prepared or
+  invited profile is explicit and revokes its pending invitation. A client who
+  deletes their account takes the profile with it.
+- `limitations` can be health information: optional, shown only to the owning
+  coach, and never logged.
+
 #### Program
 
 - `id`, `coach_id`, `name`, `description`.
@@ -456,12 +485,20 @@ WorkoutSession
 - `id`, `week_id`, `name`, `day`.
 - Multiple workouts may exist on the same day.
 - Can be duplicated within or across weeks.
-- Can be snapshotted as a standalone `WorkoutTemplate`.
+- Can be saved as a `WorkoutTemplate` (a copy of its exercises).
 
 #### WorkoutTemplate
 
-- `id`, `coach_id`, `name`, `source_workout_id`.
-- Reusable snapshot that can be applied elsewhere.
+- `id`, `coach_id`, `name`, `source_workout_id` (nullable provenance; cleared
+  if that workout is deleted).
+- A reusable workout that owns a copy of its exercises
+  (`WorkoutTemplateExercise`, with the same prescription as `WorkoutExercise`),
+  so changing or deleting the workout it was saved from never changes it.
+- Created empty, from a list of exercises, or by saving a workout. At most 26
+  exercises (one per position letter); positions follow the order of the list.
+- Applying it creates a new, independent `Workout` in a chosen week and day,
+  named after the template, which can then be edited on its own.
+- Shown as **Workouts** in the web admin (the URL keeps `/coach/templates`).
 
 #### Exercise
 
@@ -529,10 +566,10 @@ WorkoutSession
 
 | Feature | Description |
 | --- | --- |
-| Manage clients | List clients, inspect progress, remove links, and manage invitations |
+| Manage clients | Add clients with a small profile, invite them when ready, inspect progress, remove links, and manage invitations |
 | Create programs | Build weeks, days, workouts, and configured exercises |
 | Exercise catalog | Search global exercises and create coach-owned exercises |
-| Reuse workouts | Duplicate workouts and apply saved workout templates |
+| Reuse workouts | Duplicate workouts; build reusable workouts in Workouts and add them to any week |
 | Assign programs | Assign a program with start date and notes |
 | Review progress | Inspect sessions, actual weights, and repetitions |
 | Planning metrics | Volume sets and estimated workout duration |
@@ -545,12 +582,20 @@ The Next.js application already contains both role-specific views.
 
 #### Coach routes and capabilities
 
-- `/coach/clients`: client list plus create/resend/revoke invitation CRUD.
-- `/coach/clients/[id]`: individual client and progress.
+- `/coach/clients`: every client with a status (active / invited / not
+  invited) and the matching action; invitations sent from the mobile apps
+  (no profile) are listed apart.
+- `/coach/clients/new`: add a client (name required), with Save or Save and
+  invite.
+- `/coach/clients/profiles/[id]`: a client's profile, plus resend/revoke the
+  invitation, remove an active client, or delete one who has not joined.
+- `/coach/clients/[id]`: an active client's progress.
 - `/coach/programs/**`: program list, details, builder, weeks, workouts, and
   workout-exercise configuration.
 - `/coach/exercises/**`: exercise catalog and custom exercise creation.
-- `/coach/templates`: workout templates.
+- `/coach/templates`, `/coach/templates/new`, `/coach/templates/[id]`: the
+  Workouts section, reusable workouts. A workout is edited as a local draft
+  and written by an explicit Save; leaving with unsaved changes asks first.
 - `/coach/assignments/**`: program assignments.
 - `/coach/billing`: current plan, usage, and subscribing/upgrading via
   RevenueCat Web Billing.
@@ -594,11 +639,16 @@ The Next.js application already contains both role-specific views.
 7. Uses the rest timer between sets.
 8. Completes the session and makes it available in history.
 
-### 5.3 Coach invites a client
+### 5.3 Coach adds and invites a client
 
-1. Coach opens `/coach/clients` and submits the client's email.
-2. API creates a secure invitation, stores only its digest, and sends an email
-   through Resend.
+1. Coach opens `/coach/clients/new` and enters a name (the only required
+   field), optionally an email, phone, level, goal, injuries and notes. A
+   `ClientProfile` is created: the client is "prepared", has no access, and
+   does not count against the plan.
+2. When ready, the coach uses Save and invite (or Invite from the list or the
+   client's page). This needs an email. The API creates a secure invitation,
+   stores only its digest, and sends an email through Resend. A client who
+   would exceed the plan's limit is refused with 402.
 3. Email links to `${FRONTEND_URL}/invite/<raw-token>`.
 4. Coach may resend a pending invitation (rotating the token and expiry) or
    revoke it.
@@ -607,8 +657,11 @@ The Next.js application already contains both role-specific views.
 7. API verifies token state, expiry, revocation, single-use status, and exact
    normalized email match.
 8. API creates or links the client, assigns the coach, marks the invitation
-   accepted, and returns JWT tokens.
+   accepted, links their profile (or creates one), and returns JWT tokens.
 9. Frontend routes the client into the client experience.
+
+The mobile apps still invite by email alone. Such an invitation has no profile
+until it is accepted, which creates one from the account.
 
 ### 5.4 First-time coach onboarding
 
@@ -797,6 +850,9 @@ make build  # assembleDebug and assembleRelease (R8)
 | 16 | `lactic-ios` generates its Xcode project from `project.yml` (XcodeGen) and git-ignores `Lactic.xcodeproj` | Removes `project.pbxproj` as a merge-conflict surface and makes adding a file a filesystem operation rather than a project edit. Build settings live in `Configs/*.xcconfig` as a direct consequence: the Xcode UI writes into the generated project, where a regenerate silently discards the change |
 | 17 | `lactic-android` is one Gradle monorepo with two apps and clean architecture (repository → use case → ViewModel → view) | Mirrors the iOS monorepo's sharing of models, networking, and UI; the iOS code is the behavioural reference, so behaviour and tests are ported rather than re-invented |
 | 18 | Google-only sign-in on Android in v1 | Credential Manager covers Google natively; Sign in with Apple on Android needs a web-based flow and no App Review rule requires it there |
+| 19 | A workout template owns a copy of its exercises | Pointing at a live workout meant editing it silently rewrote the template, and deleting it failed (`dependent: :nullify` against a NOT NULL column). A copy keeps templates stable and lets one be applied many times, each result independent |
+| 20 | A client profile is a coach-owned record apart from `User`, matched to an invitation by email | The coach's notes exist before the person has an account and are not theirs to edit; only an invitation (which grants access) takes a plan slot; linking must never be able to fail an acceptance |
+| 21 | The web edits templates and client profiles as drafts saved explicitly and atomically | Saving each change as it was made left Save meaningless and abandoned empty records behind. Replacing the whole list is one request, all or nothing. The browser's back button cannot be intercepted, so it discards silently, like any form |
 
 ---
 
@@ -856,6 +912,10 @@ make build  # assembleDebug and assembleRelease (R8)
   state is always re-fetched from RevenueCat rather than trusted from a
   webhook payload; access is derived from `expires_at`, never a stored
   status, so it self-heals if a webhook is ever missed.
+- Preserve the client profile invariants: linking a profile never fails an
+  invitation acceptance, its email is fixed once the person is invited, and
+  only an invitation (never a prepared profile) counts against the client
+  limit.
 - Prefer the simplest v1 implementation and briefly note meaningful
   alternatives.
 - Ask before proceeding only when an ambiguity materially changes the product,
