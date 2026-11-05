@@ -95,6 +95,68 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     assert_response :no_content
   end
 
+  # === review_access ===
+
+  REVIEW_CODE = "review-code-for-tests-0123456789".freeze
+
+  test "review_access signs in the demo client, whose token opens the client screens" do
+    with_review_code(REVIEW_CODE) do
+      post api_v1_auth_review_access_path, params: { code: REVIEW_CODE }, as: :json
+
+      assert_response :ok
+      json = response.parsed_body
+      assert_equal "client", json["user"]["role"]
+      assert_equal Review::DemoAccount::CLIENT_EMAIL, json["user"]["email"]
+
+      headers = { "Authorization" => "Bearer #{json['access_token']}" }
+      get api_v1_client_programs_path, headers: headers
+      assert_response :ok
+      assert_equal 1, response.parsed_body.size
+
+      get api_v1_client_workout_sessions_path, headers: headers
+      assert_response :ok
+      assert_not_empty response.parsed_body
+
+      post api_v1_auth_refresh_path, params: { refresh_token: json["refresh_token"] }, as: :json
+      assert_response :ok
+    end
+  end
+
+  test "review_access ignores any identity or role the caller sends" do
+    with_review_code(REVIEW_CODE) do
+      post api_v1_auth_review_access_path,
+           params: { code: REVIEW_CODE, email: users(:coach_john).email, role: "coach", user_id: users(:coach_john).id },
+           as: :json
+
+      assert_response :ok
+      assert_equal Review::DemoAccount::CLIENT_EMAIL, response.parsed_body["user"]["email"]
+    end
+  end
+
+  test "review_access refuses a wrong code with 401" do
+    with_review_code(REVIEW_CODE) do
+      post api_v1_auth_review_access_path, params: { code: "nope" }, as: :json
+
+      assert_response :unauthorized
+      assert_equal "Invalid code", response.parsed_body["error"]
+    end
+  end
+
+  test "review_access answers the same 401 when no code is configured" do
+    with_review_code(nil) do
+      post api_v1_auth_review_access_path, params: { code: REVIEW_CODE }, as: :json
+
+      assert_response :unauthorized
+      assert_equal "Invalid code", response.parsed_body["error"]
+    end
+  end
+
+  test "the review code is filtered out of logs" do
+    filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
+
+    assert_equal({ "code" => "[FILTERED]" }, filter.filter({ "code" => REVIEW_CODE }))
+  end
+
   # === authentication protection ===
 
   test "protected endpoint returns 401 without token" do
@@ -103,5 +165,15 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     # For now, we verify auth middleware works via dev_login + a manual check.
     get "/up"
     assert_response :ok
+  end
+
+  private
+
+  def with_review_code(value)
+    previous = ENV["REVIEW_ACCESS_CODE"]
+    value.nil? ? ENV.delete("REVIEW_ACCESS_CODE") : ENV["REVIEW_ACCESS_CODE"] = value
+    yield
+  ensure
+    previous.nil? ? ENV.delete("REVIEW_ACCESS_CODE") : ENV["REVIEW_ACCESS_CODE"] = previous
   end
 end

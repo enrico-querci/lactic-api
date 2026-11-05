@@ -1,7 +1,12 @@
 module Api
   module V1
     class AuthController < ApplicationController
-      skip_before_action :authenticate!, only: %i[create refresh destroy dev_login]
+      skip_before_action :authenticate!, only: %i[create refresh destroy dev_login review_access]
+
+      # The code is the only secret here, so slow down anyone guessing it.
+      # Per IP, backed by the shared cache store.
+      rate_limit to: 5, within: 1.minute, only: :review_access,
+                 with: -> { render json: { error: "Too many attempts. Try again in a minute." }, status: :too_many_requests }
 
       # POST /api/v1/auth
       def create
@@ -37,6 +42,18 @@ module Api
       def destroy
         Auth::Logout.call(refresh_token: params[:refresh_token])
         head :no_content
+      end
+
+      # POST /api/v1/auth/review_access
+      def review_access
+        result = Auth::ReviewAccess.call(code: params[:code])
+        render json: {
+          access_token: result[:access_token],
+          refresh_token: result[:refresh_token],
+          user: user_json(result[:user])
+        }
+      rescue Auth::VerificationError => e
+        render json: { error: e.message }, status: :unauthorized
       end
 
       # POST /api/v1/auth/dev_login (dev/test ONLY — triple protected)
