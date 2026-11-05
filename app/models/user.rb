@@ -11,6 +11,11 @@ class User < ApplicationRecord
   has_many :workout_sessions, foreign_key: :client_id, dependent: :destroy, inverse_of: :client
   has_many :refresh_tokens, dependent: :delete_all
   has_many :client_invitations, foreign_key: :coach_id, dependent: :destroy, inverse_of: :coach
+  # A coach's records of their clients, and, for a client, the one their coach
+  # keeps of them. The latter goes with the account: someone who deletes
+  # their account is not left behind in a coach's list.
+  has_many :client_profiles, foreign_key: :coach_id, dependent: :destroy, inverse_of: :coach
+  has_one :client_profile, foreign_key: :user_id, dependent: :destroy, inverse_of: :user
   has_one :coach_subscription, dependent: :destroy
 
   validates :name, presence: true

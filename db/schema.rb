@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,6 +44,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_090000) do
     t.index ["coach_id", "email"], name: "index_pending_client_invitations_on_coach_and_email", unique: true, where: "((accepted_at IS NULL) AND (revoked_at IS NULL))"
     t.index ["coach_id"], name: "index_client_invitations_on_coach_id"
     t.index ["token_digest"], name: "index_client_invitations_on_token_digest", unique: true
+  end
+
+  create_table "client_profiles", force: :cascade do |t|
+    t.bigint "coach_id", null: false
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.string "goal"
+    t.string "level"
+    t.text "limitations"
+    t.string "name", null: false
+    t.text "notes"
+    t.string "phone"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index "coach_id, lower((email)::text)", name: "index_client_profiles_on_coach_and_lower_email", unique: true, where: "(email IS NOT NULL)"
+    t.index ["coach_id"], name: "index_client_profiles_on_coach_id"
+    t.index ["user_id"], name: "index_client_profiles_on_user_id", unique: true
   end
 
   create_table "coach_subscriptions", force: :cascade do |t|
@@ -340,6 +357,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_090000) do
   end
 
   add_foreign_key "client_invitations", "users", column: "coach_id"
+  add_foreign_key "client_profiles", "users"
+  add_foreign_key "client_profiles", "users", column: "coach_id"
   add_foreign_key "coach_subscriptions", "users"
   add_foreign_key "exercise_equipment", "equipment"
   add_foreign_key "exercise_equipment", "exercises"

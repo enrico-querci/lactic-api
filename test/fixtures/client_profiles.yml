@@ -1,0 +1,20 @@
+alice_profile:
+  coach: coach_john
+  user: client_alice
+  name: Alice Client
+  email: alice@example.com
+  level: beginner
+  goal: health
+
+bob_profile:
+  coach: coach_john
+  user: client_bob
+  name: Bob Client
+  email: bob@example.com
+
+carla_prepared:
+  coach: coach_john
+  name: Carla Prepared
+  email: carla@example.com
+  phone: "+39 333 1234567"
+  limitations: Left knee, no deep squats

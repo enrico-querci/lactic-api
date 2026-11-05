@@ -43,6 +43,29 @@ class Api::V1::Coach::ClientsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # DELETE /api/v1/coach/clients/:id
+  test "removing a client keeps their profile, back to prepared" do
+    profile = client_profiles(:alice_profile)
+
+    assert_no_difference "ClientProfile.count" do
+      delete "/api/v1/coach/clients/#{@client.id}", headers: auth_headers_for(@coach)
+    end
+
+    assert_response :no_content
+    assert_nil profile.reload.user_id
+    assert_equal "Alice Client", profile.name
+  end
+
+  test "a removed client can be invited again and relinks the same profile" do
+    delete "/api/v1/coach/clients/#{@client.id}", headers: auth_headers_for(@coach)
+    invitation = ClientInvitation.create!(coach: @coach, email: @client.email)
+
+    assert_no_difference "ClientProfile.count" do
+      ClientInvitations::Accept.call(invitation: invitation, user: @client.reload)
+    end
+
+    assert_equal @client, client_profiles(:alice_profile).reload.user
+  end
+
   test "destroy removes client from coach" do
     delete "/api/v1/coach/clients/#{@client_bob.id}", headers: auth_headers_for(@coach)
     assert_response :no_content

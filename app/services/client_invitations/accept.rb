@@ -16,6 +16,7 @@ module ClientInvitations
 
         user.update!(coach: invitation.coach)
         invitation.update!(accepted_at: Time.current)
+        ClientProfiles::LinkUser.call(coach: invitation.coach, user: user, invitation_email: invitation.email)
       end
 
       user
