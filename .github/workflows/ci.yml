@@ -5,9 +5,11 @@ on:
   push:
     branches: [ main ]
 
+# Pinned: ubuntu-latest moved to 26.04, where ruby/setup-ruby only offers the
+# newest patch of each series and so cannot find the 3.4.3 in .ruby-version.
 jobs:
   scan_ruby:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -25,7 +27,7 @@ jobs:
         run: bin/bundler-audit
       
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -51,7 +53,7 @@ jobs:
         run: bin/rubocop -f github
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
