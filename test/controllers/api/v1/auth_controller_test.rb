@@ -99,6 +99,9 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
   REVIEW_CODE = "review-code-for-tests-0123456789".freeze
 
+  # The attempt counter lives for the whole process, so each test starts from zero.
+  setup { Api::V1::AuthController::REVIEW_ACCESS_ATTEMPTS.clear }
+
   test "review_access signs in the demo client, whose token opens the client screens" do
     with_review_code(REVIEW_CODE) do
       post api_v1_auth_review_access_path, params: { code: REVIEW_CODE }, as: :json
@@ -148,6 +151,19 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :unauthorized
       assert_equal "Invalid code", response.parsed_body["error"]
+    end
+  end
+
+  test "review_access allows five attempts a minute, then answers 429, even with the right code" do
+    with_review_code(REVIEW_CODE) do
+      5.times do
+        post api_v1_auth_review_access_path, params: { code: "nope" }, as: :json
+        assert_response :unauthorized
+      end
+
+      post api_v1_auth_review_access_path, params: { code: REVIEW_CODE }, as: :json
+      assert_response :too_many_requests
+      assert_match(/Too many attempts/, response.parsed_body["error"])
     end
   end
 
