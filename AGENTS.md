@@ -230,6 +230,18 @@ the first Firebase App Distribution releases follow.
   the normalized invited email.
 - Development/test may use `/api/v1/auth/dev_login`; that route does not exist
   in production.
+- App Review signs in to Lactic without a Google or Apple identity through
+  `POST /api/v1/auth/review_access` with `{ code }`, which the apps offer beside
+  the invitation code. It is separate from invitations and leaves their
+  social-email match untouched. It exists only while `REVIEW_ACCESS_CODE` is set
+  (16 characters at least; anything shorter counts as unset), signs in one
+  fixed demo client (`Review::DemoAccount`) and never creates a user or reads a
+  role, email or id from the request. The demo client and its coach have
+  `.invalid` addresses, which no real identity can carry, and the demo client
+  comes with a coach, a four-week programme and a few weeks of logged sessions
+  built from the live catalog. It rebuilds itself after 10 days without use or
+  if the reviewer deletes it. Five attempts a minute per IP; a wrong code and an
+  unset one answer the same 401.
 
 ### 2.4 Production infrastructure
 
@@ -287,6 +299,15 @@ the first Firebase App Distribution releases follow.
   every coach simply reads as Free without it configured.
 - Never write secret values in source, documentation, logs, issues, or
   commits. Document variable names only.
+
+#### App Review access
+
+- Railway variable: `REVIEW_ACCESS_CODE`. Optional, like Resend and RevenueCat:
+  unset (or shorter than 16 characters) the endpoint refuses every code. The
+  code is given to App Review in the review notes; remove the variable to
+  close the entrance, and change it to rotate the code.
+- Never write the code in source, documentation, logs, issues, or commits.
+  Document the variable name only.
 
 #### Sign in with Apple
 
@@ -907,6 +928,9 @@ make build  # assembleDebug and assembleRelease (R8)
 - Preserve the Sign in with Apple invariants: the verifier's audience list is
   never empty, a relay address never satisfies an invitation's email match,
   and deleting an account revokes its stored Apple token first.
+- Preserve the review access invariants: it is off unless `REVIEW_ACCESS_CODE`
+  is long enough, it only ever signs in the fixed demo client, it never creates
+  a user or accepts a role, and it never touches invitations or real accounts.
 - Preserve the billing invariants: the RevenueCat webhook is
   signature-verified and idempotent per `event_id`; stored subscription
   state is always re-fetched from RevenueCat rather than trusted from a

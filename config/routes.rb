@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       post   "auth",         to: "auth#create"
       delete "auth",         to: "auth#destroy"
       post   "auth/refresh", to: "auth#refresh"
+      post   "auth/review_access", to: "auth#review_access"
 
       # RevenueCat calls this directly — no user session exists yet, so it
       # is authenticated by its own signature/shared-secret check rather
