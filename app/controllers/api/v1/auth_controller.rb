@@ -3,9 +3,16 @@ module Api
     class AuthController < ApplicationController
       skip_before_action :authenticate!, only: %i[create refresh destroy dev_login review_access]
 
+      # Counts review_access attempts. In memory, per process, on purpose: the
+      # app's shared cache (Solid Cache) has no table in production, so
+      # counting there raises. A per-process count is plenty here — it only has
+      # to make guessing a 16+ character code hopeless, not meter traffic
+      # exactly — and it keeps the limit from depending on the database.
+      REVIEW_ACCESS_ATTEMPTS = ActiveSupport::Cache::MemoryStore.new
+
       # The code is the only secret here, so slow down anyone guessing it.
-      # Per IP, backed by the shared cache store.
-      rate_limit to: 5, within: 1.minute, only: :review_access,
+      # Per IP.
+      rate_limit to: 5, within: 1.minute, only: :review_access, store: REVIEW_ACCESS_ATTEMPTS,
                  with: -> { render json: { error: "Too many attempts. Try again in a minute." }, status: :too_many_requests }
 
       # POST /api/v1/auth
