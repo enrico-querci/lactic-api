@@ -350,17 +350,19 @@ the first Firebase App Distribution releases follow.
 
 ### 2.5 Last verified production state
 
-Verified on **2026-08-24**:
+Verified on **2026-11-05**:
 
 | Component | Source commit | Deployment | Result |
 | --- | --- | --- | --- |
-| API | `e9baae8700d789e745d3f0a43ec2f6e743ad8f7e` | Railway `07541263-8c12-42ec-bb7d-29307aa96e98` | `SUCCESS`; `/up` returned HTTP 200 |
-| Web | `1a0d1a59242e7de830c7f3b8aa7011f5bd618fc0` | Vercel `dpl_2tqmoPBJKsMTcVqaUxVru5VyNEe7` | `READY`; production alias verified |
+| API | `2b48bf071e64c523f7cbd53abfddab745777e186` | Railway `b1359b19-acc7-496a-a3b8-67ee4bb9079a` | `SUCCESS`; `/up` returned HTTP 200 |
+| Web | `4f3d1674012a1c2b85bf10b1cb364888a1abf474` | Vercel `dpl_8mfMADnw5Xk4yuK6zrxZ1iX5sRFW` | `READY`; `/` and `/login` returned HTTP 200 |
+
+Both commits equal `origin/main` of their repository at verification time.
 
 Merged pull requests:
 
-- API: `enrico-querci/lactic-api#45`
-- Web: `enrico-querci/lactic-web#25`
+- API: `enrico-querci/lactic-api#63`
+- Web: `enrico-querci/lactic-web#36`
 
 ---
 
