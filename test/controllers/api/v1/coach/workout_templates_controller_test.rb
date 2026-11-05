@@ -101,7 +101,91 @@ class Api::V1::Coach::WorkoutTemplatesControllerTest < ActionDispatch::Integrati
     assert_response :unprocessable_entity
   end
 
+  # POST create with exercises
+  def exercise_items(*pairs)
+    pairs.map { |exercise, extra| { exercise_id: exercise.id, sets: 3, reps: 10, rest_seconds: 90 }.merge(extra || {}) }
+  end
+
+  test "create with workout_exercises saves the template and its exercises together" do
+    assert_difference [ "WorkoutTemplate.count" ], 1 do
+      assert_difference "WorkoutTemplateExercise.count", 2 do
+        post "/api/v1/coach/workout_templates",
+             params: { name: "Gambe", workout_exercises: exercise_items([ exercises(:squat) ], [ exercises(:bicep_curl), { sets: 4 } ]) },
+             headers: auth_headers_for(@coach), as: :json
+      end
+    end
+    assert_response :created
+    json = JSON.parse(response.body)
+    assert_equal 2, json["exercise_count"]
+    assert_equal %w[A B], json["workout_exercises"].map { |e| e["position"] }
+    assert_equal 4, json["workout_exercises"].last["sets"]
+  end
+
+  test "create with an invalid exercise leaves no template behind" do
+    assert_no_difference [ "WorkoutTemplate.count", "WorkoutTemplateExercise.count" ] do
+      post "/api/v1/coach/workout_templates",
+           params: { name: "Broken", workout_exercises: exercise_items([ exercises(:squat), { sets: 0 } ]) },
+           headers: auth_headers_for(@coach), as: :json
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "create with an exercise the coach cannot pick leaves no template behind" do
+    assert_no_difference [ "WorkoutTemplate.count", "WorkoutTemplateExercise.count" ] do
+      post "/api/v1/coach/workout_templates",
+           params: { name: "Nope", workout_exercises: exercise_items([ exercises(:provider_treadmill) ]) },
+           headers: auth_headers_for(@coach), as: :json
+    end
+    assert_response :not_found
+  end
+
   # PATCH update
+  test "update replaces the exercises as one change" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { name: "Renamed", workout_exercises: exercise_items([ exercises(:squat), { reps: 6 } ]) },
+          headers: auth_headers_for(@coach), as: :json
+    assert_response :ok
+
+    json = JSON.parse(response.body)
+    assert_equal "Renamed", json["name"]
+    assert_equal [ exercises(:squat).id ], json["workout_exercises"].map { |e| e["exercise"]["id"] }
+    assert_equal [ "A" ], json["workout_exercises"].map { |e| e["position"] }
+    assert_equal 1, @template.reload.workout_template_exercises.count
+  end
+
+  test "update without workout_exercises leaves the exercises alone" do
+    assert_no_difference "WorkoutTemplateExercise.count" do
+      patch "/api/v1/coach/workout_templates/#{@template.id}",
+            params: { name: "Only the name" }, headers: auth_headers_for(@coach), as: :json
+    end
+    assert_equal "Only the name", @template.reload.name
+  end
+
+  test "update with an empty list clears the exercises" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { workout_exercises: [] }, headers: auth_headers_for(@coach), as: :json
+    assert_response :ok
+    assert_empty @template.reload.workout_template_exercises
+    assert_equal "Chest Day Template", @template.name
+  end
+
+  test "a failed update changes neither the name nor the exercises" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { name: "Renamed", workout_exercises: exercise_items([ exercises(:squat), { reps: 0 } ]) },
+          headers: auth_headers_for(@coach), as: :json
+    assert_response :unprocessable_entity
+    assert_equal "Chest Day Template", @template.reload.name
+    assert_equal %w[A B], @template.workout_template_exercises.map(&:position)
+  end
+
+  test "update with a blank name and new exercises changes nothing" do
+    patch "/api/v1/coach/workout_templates/#{@template.id}",
+          params: { name: "", workout_exercises: exercise_items([ exercises(:squat) ]) },
+          headers: auth_headers_for(@coach), as: :json
+    assert_response :unprocessable_entity
+    assert_equal 2, @template.reload.workout_template_exercises.count
+  end
+
   test "update renames a template" do
     patch "/api/v1/coach/workout_templates/#{@template.id}",
           params: { name: "Renamed" },

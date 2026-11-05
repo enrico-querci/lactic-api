@@ -18,9 +18,12 @@ module Api
 
         # POST /api/v1/coach/workout_templates
         #
-        # With `source_workout_id` the template starts as a copy of that
-        # workout's exercises; without it, it starts empty and is filled
-        # through the nested workout_exercises endpoints.
+        # Three ways to start a template:
+        # - with `source_workout_id`, as a copy of that workout's exercises;
+        # - with `workout_exercises`, holding that list;
+        # - with neither, empty.
+        # The name and the exercises are written together, so a list that
+        # fails validation leaves no template behind.
         def create
           template = if params[:source_workout_id].present?
             workout = Workout.joins(week: :program)
@@ -28,16 +31,28 @@ module Api
                             .find(params[:source_workout_id])
             WorkoutTemplateBuilder.call(coach: current_user, name: params[:name], workout: workout)
           else
-            current_user.workout_templates.create!(name: params[:name])
+            ApplicationRecord.transaction do
+              created = current_user.workout_templates.create!(name: params[:name])
+              replace_exercises(created) if params.key?(:workout_exercises)
+              created
+            end
           end
-          render json: WorkoutTemplateBlueprint.render(template), status: :created
+          render json: WorkoutTemplateBlueprint.render(template, view: :extended, locale: current_locale),
+                 status: :created
         end
 
         # PATCH /api/v1/coach/workout_templates/:id
+        #
+        # Renames (`name`) and/or replaces the exercises (`workout_exercises`,
+        # the complete list as it should be after saving). Each part is applied
+        # only when its key is present, and together or not at all.
         def update
           template = current_user.workout_templates.find(params[:id])
-          template.update!(name: params[:name])
-          render json: WorkoutTemplateBlueprint.render(template)
+          ApplicationRecord.transaction do
+            template.update!(name: params[:name]) if params.key?(:name)
+            replace_exercises(template) if params.key?(:workout_exercises)
+          end
+          render json: WorkoutTemplateBlueprint.render(template.reload, view: :extended, locale: current_locale)
         end
 
         # DELETE /api/v1/coach/workout_templates/:id
@@ -60,6 +75,19 @@ module Api
             day: params[:day].to_i
           )
           render json: WorkoutBlueprint.render(workout, view: :extended, locale: current_locale), status: :created
+        end
+
+        private
+
+        # An absent or empty list clears the template; a missing key never
+        # reaches here.
+        def replace_exercises(template)
+          items = params.permit(
+            workout_exercises: %i[exercise_id sets reps rest_seconds rir weight notes]
+          )[:workout_exercises] || []
+          WorkoutTemplateExerciseReplacer.call(
+            template: template, coach: current_user, items: items.map { |item| item.to_h.with_indifferent_access }
+          )
         end
       end
     end
