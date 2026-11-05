@@ -6,7 +6,7 @@ module Api
 
         # GET /api/v1/coach/workout_templates
         def index
-          templates = current_user.workout_templates
+          templates = current_user.workout_templates.includes(:workout_template_exercises)
           render json: WorkoutTemplateBlueprint.render(templates)
         end
 
@@ -22,10 +22,7 @@ module Api
                           .where(programs: { coach_id: current_user.id })
                           .find(params[:source_workout_id])
 
-          template = current_user.workout_templates.create!(
-            name: params[:name],
-            source_workout: workout
-          )
+          template = WorkoutTemplateBuilder.call(coach: current_user, name: params[:name], workout: workout)
           render json: WorkoutTemplateBlueprint.render(template), status: :created
         end
 

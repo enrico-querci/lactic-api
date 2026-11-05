@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -302,11 +302,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_090000) do
     t.index ["workout_id"], name: "index_workout_sessions_on_workout_id"
   end
 
+  create_table "workout_template_exercises", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "exercise_id", null: false
+    t.text "notes"
+    t.string "position", null: false
+    t.integer "reps", null: false
+    t.integer "rest_seconds"
+    t.integer "rir"
+    t.integer "sets", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "weight", precision: 6, scale: 2
+    t.bigint "workout_template_id", null: false
+    t.index ["exercise_id"], name: "index_workout_template_exercises_on_exercise_id"
+    t.index ["workout_template_id", "position"], name: "index_workout_template_exercises_on_template_and_position", unique: true
+    t.index ["workout_template_id"], name: "index_workout_template_exercises_on_workout_template_id"
+  end
+
   create_table "workout_templates", force: :cascade do |t|
     t.bigint "coach_id", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
-    t.bigint "source_workout_id", null: false
+    t.bigint "source_workout_id"
     t.datetime "updated_at", null: false
     t.index ["coach_id"], name: "index_workout_templates_on_coach_id"
     t.index ["source_workout_id"], name: "index_workout_templates_on_source_workout_id"
@@ -346,7 +363,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_090000) do
   add_foreign_key "workout_sessions", "program_assignments"
   add_foreign_key "workout_sessions", "users", column: "client_id"
   add_foreign_key "workout_sessions", "workouts"
+  add_foreign_key "workout_template_exercises", "exercises"
+  add_foreign_key "workout_template_exercises", "workout_templates"
   add_foreign_key "workout_templates", "users", column: "coach_id"
-  add_foreign_key "workout_templates", "workouts", column: "source_workout_id"
+  add_foreign_key "workout_templates", "workouts", column: "source_workout_id", on_delete: :nullify
   add_foreign_key "workouts", "weeks"
 end

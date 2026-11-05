@@ -1,0 +1,17 @@
+bench_in_chest_template:
+  workout_template: chest_template
+  exercise: bench_press
+  position: A
+  sets: 4
+  reps: 10
+  rest_seconds: 90
+  rir: 2
+  weight: 60.00
+
+curl_in_chest_template:
+  workout_template: chest_template
+  exercise: bicep_curl
+  position: B
+  sets: 3
+  reps: 12
+  rest_seconds: 60
