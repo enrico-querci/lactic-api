@@ -167,6 +167,20 @@ class Api::V1::AuthControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "review_access counts attempts for the endpoint as a whole, whatever address they come from" do
+    with_review_code(REVIEW_CODE) do
+      5.times do |index|
+        post api_v1_auth_review_access_path, params: { code: "nope" }, as: :json,
+                                             env: { "REMOTE_ADDR" => "100.64.0.#{index + 1}" }
+        assert_response :unauthorized
+      end
+
+      post api_v1_auth_review_access_path, params: { code: REVIEW_CODE }, as: :json,
+                                           env: { "REMOTE_ADDR" => "100.64.0.99" }
+      assert_response :too_many_requests
+    end
+  end
+
   test "the review code is filtered out of logs" do
     filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
 

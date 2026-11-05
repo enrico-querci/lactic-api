@@ -11,8 +11,14 @@ module Api
       REVIEW_ACCESS_ATTEMPTS = ActiveSupport::Cache::MemoryStore.new
 
       # The code is the only secret here, so slow down anyone guessing it.
-      # Per IP.
+      #
+      # Counted for the endpoint as a whole, not per IP: behind Railway's proxy
+      # Rails sees a different internal address (100.64.0.x, outside its
+      # trusted proxy ranges) on each request, so a per-IP count never adds
+      # up, and the forwarded header is the caller's to forge. Few people ever
+      # use this, and a flood only makes a reviewer wait a minute.
       rate_limit to: 5, within: 1.minute, only: :review_access, store: REVIEW_ACCESS_ATTEMPTS,
+                 by: -> { "review_access" },
                  with: -> { render json: { error: "Too many attempts. Try again in a minute." }, status: :too_many_requests }
 
       # POST /api/v1/auth

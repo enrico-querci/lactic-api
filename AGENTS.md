@@ -240,8 +240,10 @@ the first Firebase App Distribution releases follow.
   `.invalid` addresses, which no real identity can carry, and the demo client
   comes with a coach, a four-week programme and a few weeks of logged sessions
   built from the live catalog. It rebuilds itself after 10 days without use or
-  if the reviewer deletes it. Five attempts a minute per IP; a wrong code and an
-  unset one answer the same 401.
+  if the reviewer deletes it. Five attempts a minute for the endpoint as a whole (per
+  server process, not per IP: behind Railway's proxy Rails sees a different
+  internal address on every request); a wrong code and an unset one answer the
+  same 401.
 
 ### 2.4 Production infrastructure
 
